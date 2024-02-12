@@ -56,6 +56,7 @@ void writeLog(const char *format, ...)
     }
 }
 
+// return sign of arg X
 int sign(int x)
 {
     if (x < 0)
@@ -78,6 +79,28 @@ void create_pipe(int pipe_fd[], char string_pipe_fd[][20]){
     for (int i = 0; i < 2; i++)
     {
         sprintf(string_pipe_fd[i], "%d", pipe_fd[i]);
+    }
+}
+
+// save the real pid of the process
+// ARGS: 1) pipe array fd, 2) address of the variable to save the pid ex: &child_pids_received[i]
+void recive_correct_pid(int pipe_fd[2], int *pid_address){
+    // close the write file descriptor
+    if (close(pipe_fd[1]) == -1)
+    {   
+        perror("master: close RD");
+        writeLog("==> ERROR ==> master: close pipe RD, %m ");
+    }
+    // read from pipe, blocking read
+    if (read(pipe_fd[0], pid_address, sizeof(pid_t)) == -1)
+    {
+        perror("master: read");
+        writeLog("==> ERROR ==> master: read, %m ");
+    }
+    if (close(pipe_fd[0]) == -1)
+    {
+        perror("master: close WR");
+        writeLog("==> ERROR ==> master: close pipe WR, %m ");
     }
 }
 

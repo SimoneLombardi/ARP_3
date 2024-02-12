@@ -13,4 +13,6 @@ int sign(int x);
 
 void create_pipe(int pipe_fd[], char string_pipe_fd[][20]);
 
+void recive_correct_pid(int pipe_fd[2], int *pid_address);
+
 #endif //ARPLIB_H

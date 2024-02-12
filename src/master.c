@@ -89,11 +89,11 @@ int main()
     create_pipe(fd5, str_fd5);
 
     // write in log for debug
-    writeLog("MASTER send to server the pipe fd1 file descriptor: %d, %d ", fd1[0], fd1[1]);
-    writeLog("MASTER send to input the pipe fd2 file descriptor: %d, %d ", fd2[0], fd2[1]);
-    writeLog("MASTER send to drone the pipe fd3 file descriptor: %d, %d ", fd3[0], fd3[1]);
-    writeLog("MASTER send to target the pipe fd4 file descriptor: %d, %d ", fd4[0], fd4[1]);
-    writeLog("MASTER send to obstacle the pipe fd5 file descriptor: %d, %d ", fd5[0], fd5[1]);
+    writeLog("MASTER send to server --- fd1 file desc: %d, %d ", fd1[0], fd1[1]);
+    writeLog("MASTER send to input ---- fd2 file desc: %d, %d ", fd2[0], fd2[1]);
+    writeLog("MASTER send to drone ---- fd3 file desc: %d, %d ", fd3[0], fd3[1]);
+    writeLog("MASTER send to target --- fd4 file desc: %d, %d ", fd4[0], fd4[1]);
+    writeLog("MASTER send to obstacle - fd5 file desc: %d, %d ", fd5[0], fd5[1]);
 
     //// Pipe for communication between INPUT and SERVER
     int fdi_s[2];
@@ -125,118 +125,49 @@ int main()
 
     create_pipe(fdo_s, str_fdo_s);
 
+    // write log for debug
+    writeLog("MASTER to server   fdi_s: %d,%d  fdd_s: %d,%d  fdt_s: %d,%d  fdo_s: %d,%d  fds_d: %d,%d  ", fdi_s[0], fdi_s[1], fdd_s[0], fdd_s[1], fdt_s[0], fdt_s[1], fdo_s[0], fdo_s[1], fds_d[0], fds_d[1]);
+    writeLog("MASTER to input    fdi_s: %d,%d  ", fdi_s[0], fdi_s[1]);
+    writeLog("MASTER to drone    fdd_s: %d,%d  fds_d: %d,%d  ", fdd_s[0], fdd_s[1], fds_d[0], fds_d[1]);
+    writeLog("MASTER to target   fdt_s: %d,%d  ", fdt_s[0], fdt_s[1]);
+    writeLog("MASTER to obstacle fdo_s: %d,%d  ", fdo_s[0], fdo_s[1]);
+
 
     // --- SERVER process ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     // Server process is execute with konsole so, the child_pid(correspond to the pid of the kosole) and the child_pid_received( correspod to the pid of process)
     char *arg_list_server[] = {"konsole", "-e", "./server", str_fd1[0], str_fd1[1], str_fdi_s[0], str_fdi_s[1], str_fdd_s[0], str_fdd_s[1], str_fdt_s[0], str_fdt_s[1], str_fdo_s[0], str_fdo_s[1], str_fds_d[0], str_fds_d[1], NULL};
     child_pids[0] = spawn("konsole", arg_list_server);
     writeLog("MASTER spawn server with pid: %d ", child_pids[0]);
-    // close the write file descriptor
-    if (close(fd1[1]) == -1)
-    {
-        perror("master: close fd1[1]");
-        writeLog("==> ERROR ==> master: fclose fd1[1], %m ");
-    }
-    // read from pipe, blocking read
-    if (read(fd1[0], &child_pids_received[0], sizeof(pid_t)) == -1)
-    {
-        perror("master: read fd1[0]");
-        writeLog("==> ERROR ==> master: read fd1[0], %m ");
-    }
-    if (close(fd1[0]) == -1)
-    {
-        perror("master: close fd1[0]");
-        writeLog("==> ERROR ==> master: close fd1[0], %m ");
-    }
+    
+    recive_correct_pid(fd1, &child_pids_received[0]);
 
     // --- INPUT process ----------------------------------------------------------------------------------------
     char *arg_list_i[] = {"konsole", "-e", "./input", str_fd2[0], str_fd2[1], str_fdi_s[0], str_fdi_s[1], NULL};
     child_pids[1] = spawn("konsole", arg_list_i);
-    writeLog("MSTER spawn input with pid: %d ", child_pids[1]);
-    // close the write file descriptor
-    if (close(fd2[1]) == -1)
-    {
-        perror("master: close fd2[1]");
-        writeLog("==> ERROR ==> master: fclose fd2[1], %m ");
-    }
-    // read from pipe, blocking read
-    if (read(fd2[0], &child_pids_received[1], sizeof(pid_t)) == -1)
-    {
-        perror("master: read fd2[0]");
-        writeLog("==> ERROR ==> master: read fd2[0], %m ");
-    }
-    if (close(fd2[0]) == -1)
-    {
-        perror("master: close fd2[0]");
-        writeLog("==> ERROR ==> master: close fd2[0], %m ");
-    }
-    writeLog("MASTER send to input fdi_s with value: %d, %d ", fdi_s[0], fdi_s[1]);
+    writeLog("MASTER spawn input with pid: %d ", child_pids[1]);
+    
+    recive_correct_pid(fd2, &child_pids_received[1]);
 
     // --- DRONE process -------------------------------------------------------------------------------------------------
     char *arg_list_drone[] = {"./drone", str_fd3[0], str_fd3[1], str_fdd_s[0], str_fdd_s[1], str_fds_d[0], str_fds_d[1], NULL};
     child_pids[2] = spawn("./drone", arg_list_drone);
     writeLog("MASTER spawn drone with pid: %d ", child_pids[2]);
-    // close the write file descriptor
-    if (close(fd3[1]) == -1)
-    {
-        perror("master: close fd3[1]");
-        writeLog("==> ERROR ==> master: close fd3[1], %m ");
-    }
-    // read from pipe, blocking read
-    if (read(fd3[0], &child_pids_received[2], sizeof(pid_t)) == -1)
-    {
-        perror("master: read fd3[0]");
-        writeLog("==> ERROR ==> master: read fd3[0], %m ");
-    }
-    if (close(fd3[0]) == -1)
-    {
-        perror("master: close fd3[0]");
-        writeLog("==> ERROR ==> master: close fd3[0], %m ");
-    }
+    
+    recive_correct_pid(fd3, &child_pids_received[2]);
 
     //---- TARGET process -----------------------------------------------------------------------------------------------------
     char *arg_list_target[] = {"./target", str_fd4[0], str_fd4[1], str_fdt_s[0], str_fdt_s[1], NULL};
     child_pids[3] = spawn("./target", arg_list_target);
     writeLog("MASTER spawn target with pid: %d ", child_pids[3]);
-    // close the write file descriptor
-    if (close(fd4[1]) == -1)
-    {
-        perror("master: close fd4[1]");
-        writeLog("==> ERROR ==> master: close fd4[1], %m ");
-    }
-    // read from pipe, blocking read
-    if (read(fd4[0], &child_pids_received[3], sizeof(pid_t)) == -1)
-    {
-        perror("master: read fd4[0]");
-        writeLog("==> ERROR ==> master: read fd4[0], %m ");
-    }
-    if (close(fd4[0]) == -1)
-    {
-        perror("master: close fd4[0]");
-        writeLog("==> ERROR ==> master: close fd4[0], %m ");
-    }
+    
+    recive_correct_pid(fd4, &child_pids_received[3]);
 
     //---- OBSTACLE process -------------------------------------------------------------------------------------------------------
     char *arg_list_obstacle[] = {"./obstacle", str_fd5[0], str_fd5[1], str_fdo_s[0], str_fdo_s[1], NULL};
     child_pids[4] = spawn("./obstacle", arg_list_obstacle);
     writeLog("MASTER spawn obstacle with pid: %d ", child_pids[4]);
-    // close the write file descriptor
-    if (close(fd5[1]) == -1)
-    {
-        perror("master: close fd5[1]");
-        writeLog("==> ERROR ==> master: close fd5[1], %m ");
-    }
-    // read from pipe, blocking read
-    if (read(fd5[0], &child_pids_received[4], sizeof(pid_t)) == -1)
-    {
-        perror("master: read fd5[0]");
-        writeLog("==> ERROR ==> master: read fd5[0], %m ");
-    }
-    if (close(fd5[0]) == -1)
-    {
-        perror("master: close fd5[0]");
-        writeLog("==> ERROR ==> master: close fd5[0], %m ");
-    }
+    
+    recive_correct_pid(fd5, &child_pids_received[4]);
 
     // Convert the array child_pids in string
     for (i = 0; i < num_ps; i++)
@@ -248,6 +179,7 @@ int main()
     {
         sprintf(str_child_pids_received[i], "%d", child_pids_received[i]);
     }
+    
     writeLog("MASTER: child_pids are: %s, %s, %s, %s, %s ", str_child_pids[0], str_child_pids[1], str_child_pids[2], str_child_pids[3], str_child_pids[4]);
     writeLog("MASTER child_pids_received are: %s, %s, %s, %s, %s", str_child_pids_received[0], str_child_pids_received[1], str_child_pids_received[2], str_child_pids_received[3], str_child_pids_received[4]);
     
@@ -283,4 +215,3 @@ int main()
     
     return 0;
 }
-
