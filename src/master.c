@@ -60,73 +60,33 @@ int main()
     // manage pipe------------------------------------------------------------------------
     // Pipe for comommunication between server -> master for send back the pid
     int fd1[2];
-    if ((pipe(fd1)) < 0)
-    {
-        perror("master: pipe fd1");
-        writeLog("==> ERROR ==> master: build pipe fd1, %m ");
-    }
-    // convert fd pipe in str
     char str_fd1[2][20];
-    for (i = 0; i < 2; i++)
-    {
-        sprintf(str_fd1[i], "%d", fd1[i]);
-    }
+    
+    create_pipe(fd1, str_fd1);
 
     // Pipe for comommunication between input -> master
     int fd2[2];
-    if ((pipe(fd2)) < 0)
-    {
-        perror("master: pipe fd2");
-        writeLog("==> ERROR ==> master: pipe fd2, %m ");
-    }
-    // convert fd pipe in str
     char str_fd2[2][20];
-    for (i = 0; i < 2; i++)
-    {
-        sprintf(str_fd2[i], "%d", fd2[i]);
-    }
+    
+    create_pipe(fd2, str_fd2);
 
     // Pipe for comommunication between drone -> master
     int fd3[2];
-    if ((pipe(fd3)) < 0)
-    {
-        perror("master: pipe fd3");
-        writeLog("==> ERROR ==> master: pipe fd3, %m ");
-    }
-    // convert fd pipe in str
     char str_fd3[2][20];
-    for (i = 0; i < 2; i++)
-    {
-        sprintf(str_fd3[i], "%d", fd3[i]);
-    }
+    
+    create_pipe(fd3, str_fd3);
 
     // Pipe for comommunication between target -> master
     int fd4[2];
-    if ((pipe(fd4)) < 0)
-    {
-        perror("master: pipe fd4");
-        writeLog("==> ERROR ==> master: pipe fd4, %m ");
-    }
-    // convert fd pipe in str
     char str_fd4[2][20];
-    for (i = 0; i < 2; i++)
-    {
-        sprintf(str_fd4[i], "%d", fd4[i]);
-    }
+    
+    create_pipe(fd4, str_fd4);
 
     // Pipe for communication between obstacle -> master
     int fd5[2];
-    if ((pipe(fd5)) < 0)
-    {
-        perror("master: pipe fd5");
-        writeLog("==> ERROR ==> master: build pipe fd5, %m ");
-    }
-    // convert fd pipe in str
     char str_fd5[2][20];
-    for (i = 0; i < 2; i++)
-    {
-        sprintf(str_fd5[i], "%d", fd5[i]);
-    }
+    
+    create_pipe(fd5, str_fd5);
 
     // write in log for debug
     writeLog("MASTER send to server the pipe fd1 file descriptor: %d, %d ", fd1[0], fd1[1]);
@@ -137,72 +97,34 @@ int main()
 
     //// Pipe for communication between INPUT and SERVER
     int fdi_s[2];
-    if ((pipe(fdi_s)) < 0)
-    {
-        perror("master: pipe fdi_s ");
-        writeLog("==> ERROR ==> master: fdi_s, %m ");
-    }
-    // Convert fd in sting
     char str_fdi_s[2][20];
-    for (i = 0; i < 2; i++)
-    {
-        sprintf(str_fdi_s[i], "%d", fdi_s[i]);
-    }
+    
+    create_pipe(fdi_s, str_fdi_s);
 
     //// Pipe for communication between DRONE and SERVER
     int fdd_s[2];
-    if ((pipe(fdd_s)) < 0)
-    {
-        perror("master: pipe fdd_s ");
-        writeLog("==> ERROR ==> master: fdd_s, %m ");
-    }
-    // Convert fd in sting
     char str_fdd_s[2][20];
-    for (i = 0; i < 2; i++)
-    {
-        sprintf(str_fdd_s[i], "%d", fdd_s[i]);
-    }
+
+    create_pipe(fdd_s, str_fdd_s);
+
     //// Pipe for communication between SERVER and DRONE
     int fds_d[2];
-    if ((pipe(fds_d)) < 0)
-    {
-        perror("master: pipe fds_d ");
-        writeLog("==> ERROR ==> master: fds_d, %m ");
-    }
-    // Convert fd in sting
-    char str_fds_d[2][20];
-    for (i = 0; i < 2; i++)
-    {
-        sprintf(str_fds_d[i], "%d", fds_d[i]);
-    }
+    char str_fds_d[2][20]; 
+
+    create_pipe(fds_d, str_fds_d);
 
     //// Pipe for communication between TARGET and SERVER
     int fdt_s[2];
-    if ((pipe(fdt_s)) < 0)
-    {
-        perror("master: pipe fdt_s ");
-        writeLog("==> ERROR ==> master: fdt_s, %m ");
-    }
-    // Convert fd in sting
     char str_fdt_s[2][20];
-    for (i = 0; i < 2; i++)
-    {
-        sprintf(str_fdt_s[i], "%d", fdt_s[i]);
-    }
+
+    create_pipe(fdt_s, str_fdt_s);
 
     //// Pipe for comunication between OBSTACLE and SERVER
     int fdo_s[2];
-    if ((pipe(fdo_s)) < 0)
-    {
-        perror("master: pipe fdo_s ");
-        writeLog("==> ERROR ==> master: fdo_s, %m ");
-    }
-    // Convert fd in sting
     char str_fdo_s[2][20];
-    for (i = 0; i < 2; i++)
-    {
-        sprintf(str_fdo_s[i], "%d", fdo_s[i]);
-    }
+
+    create_pipe(fdo_s, str_fdo_s);
+
 
     // --- SERVER process ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     // Server process is execute with konsole so, the child_pid(correspond to the pid of the kosole) and the child_pid_received( correspod to the pid of process)
@@ -361,3 +283,4 @@ int main()
     
     return 0;
 }
+

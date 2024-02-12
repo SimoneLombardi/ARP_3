@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <ncurses.h>
+#include <sys/types.h>
 
 int spawn(const char *program, char **arg_list)
 {
@@ -63,6 +64,21 @@ int sign(int x)
         return 1;
     else
         return 1;
+}
+
+// create a pipe and convert the value to string for send the fd
+void create_pipe(int pipe_fd[], char string_pipe_fd[][20]){
+    // create the pipe
+    if ((pipe(pipe_fd)) < 0)
+    {
+        perror("master: pipe fd1");
+        writeLog("==> ERROR ==> master: build pipe fd1, %m ");
+    }
+    // convert fd pipe in str
+    for (int i = 0; i < 2; i++)
+    {
+        sprintf(string_pipe_fd[i], "%d", pipe_fd[i]);
+    }
 }
 
 

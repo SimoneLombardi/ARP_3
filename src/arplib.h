@@ -11,5 +11,6 @@ void writeLog(const char *format, ...);
 
 int sign(int x);
 
+void create_pipe(int pipe_fd[], char string_pipe_fd[][20]);
 
 #endif //ARPLIB_H
