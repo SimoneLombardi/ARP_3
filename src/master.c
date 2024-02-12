@@ -132,8 +132,39 @@ int main()
     writeLog("MASTER to target   fdt_s: %d,%d  ", fdt_s[0], fdt_s[1]);
     writeLog("MASTER to obstacle fdo_s: %d,%d  ", fdo_s[0], fdo_s[1]);
 
+    // --- Rule printing -------------------------------------------------------------------------------------------------
+    int fd6[2], rule_pipe[2];
+    char str_fd6[2][20], str_rule_pipe[2][20];
 
-    // --- SERVER process ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    create_pipe(fd6, str_fd6);
+    create_pipe(rule_pipe, str_rule_pipe);
+
+    // variabili per recupero informazioni
+    int retVal_read;
+    char read_buffer[256];
+
+    int rule_pid, real_rule_pid;
+    char *arg_list_rule_print[] = {"konsole", "-e", "./rule_print", str_fd6[0], str_fd6[1], str_rule_pipe[0], str_rule_pipe[1],NULL};
+
+    rule_pid = spawn("konsole", arg_list_rule_print);
+    writeLog("MASTER spawn rule process with pid: %d ", rule_pid);
+
+    recive_correct_pid(fd6, &real_rule_pid);
+
+    writeLog("MASTER spawn rule process with real pid: %d ", real_rule_pid);
+
+    // recuperare le informazioni per l'apertura del server socket
+    if((retVal_read = read(rule_pipe[0], read_buffer, sizeof(read_buffer)))){
+        perror("master: read");
+        writeLog("==> ERROR ==> master: read, %m ");
+    }
+
+
+
+    //--- SOCKET SERVER process -------------------------------------------------------------------------------------------------
+
+
+    // --- GAME SERVER process ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     // Server process is execute with konsole so, the child_pid(correspond to the pid of the kosole) and the child_pid_received( correspod to the pid of process)
     char *arg_list_server[] = {"konsole", "-e", "./server", str_fd1[0], str_fd1[1], str_fdi_s[0], str_fdi_s[1], str_fdd_s[0], str_fdd_s[1], str_fdt_s[0], str_fdt_s[1], str_fdo_s[0], str_fdo_s[1], str_fds_d[0], str_fds_d[1], NULL};
     child_pids[0] = spawn("konsole", arg_list_server);
@@ -179,7 +210,7 @@ int main()
     {
         sprintf(str_child_pids_received[i], "%d", child_pids_received[i]);
     }
-    
+
     writeLog("MASTER: child_pids are: %s, %s, %s, %s, %s ", str_child_pids[0], str_child_pids[1], str_child_pids[2], str_child_pids[3], str_child_pids[4]);
     writeLog("MASTER child_pids_received are: %s, %s, %s, %s, %s", str_child_pids_received[0], str_child_pids_received[1], str_child_pids_received[2], str_child_pids_received[3], str_child_pids_received[4]);
     
