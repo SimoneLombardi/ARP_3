@@ -154,12 +154,12 @@ int main()
     writeLog("MASTER spawn rule process with real pid: %d ", real_rule_pid);
 
     // recuperare le informazioni per l'apertura del server socket
-    if((retVal_read = read(rule_pipe[0], read_buffer, sizeof(read_buffer)))){
+    if((retVal_read = read(rule_pipe[0], read_buffer, sizeof(read_buffer))) < 0){
         perror("master: read");
         writeLog("==> ERROR ==> master: read, %m ");
     }
 
-
+    printf("read_buffer from rule print: %s\n", read_buffer);
 
     //--- SOCKET SERVER process -------------------------------------------------------------------------------------------------
 

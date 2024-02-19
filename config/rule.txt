@@ -16,6 +16,3 @@ F : rigth
 X : down left 
 C : down      
 V : down rigth
-
-
-Press | --- SPACE --- | when you are Ready!
