@@ -26,7 +26,7 @@ int main()
 
     // inizialize the variabiles needed
     // all proces without wd
-    int num_ps = PROCESS_NUMBER;
+    int num_ps = PROCESS_NUMBER; // cambiato process number da 5 a 6 (aggiunto il server socket)
     // all process plus watchdog
     int tot_ps = num_ps + 1;
     // array with all the pid of the process execute by master throw execvp
@@ -90,12 +90,19 @@ int main()
     
     create_pipe(fd5, str_fd5);
 
+    // Pipe for communication between master -> socket server
+    int fd6[2];
+    char str_fd6[2][20];
+    create_pipe(fd6, str_fd6);
+
+
     // write in log for debug
     writeLog("MASTER send to server --- fd1 file desc: %d, %d ", fd1[0], fd1[1]);
     writeLog("MASTER send to input ---- fd2 file desc: %d, %d ", fd2[0], fd2[1]);
     writeLog("MASTER send to drone ---- fd3 file desc: %d, %d ", fd3[0], fd3[1]);
     writeLog("MASTER send to target --- fd4 file desc: %d, %d ", fd4[0], fd4[1]);
     writeLog("MASTER send to obstacle - fd5 file desc: %d, %d ", fd5[0], fd5[1]);
+    writeLog("MASTER send to rule print - fd6 file desc: %d, %d ", fd6[0], fd6[1]);
 
     //// Pipe for communication between INPUT and SERVER
     int fdi_s[2];
@@ -127,20 +134,21 @@ int main()
 
     create_pipe(fdo_s, str_fdo_s);
 
+    //// Pipe for comunication between MASTER and SOCKET SERVER
+    int rule_pipe[2];
+    char str_rule_pipe[2][20];
+
+    create_pipe(rule_pipe, str_rule_pipe);
+
     // write log for debug
     writeLog("MASTER to server   fdi_s: %d,%d  fdd_s: %d,%d  fdt_s: %d,%d  fdo_s: %d,%d  fds_d: %d,%d  ", fdi_s[0], fdi_s[1], fdd_s[0], fdd_s[1], fdt_s[0], fdt_s[1], fdo_s[0], fdo_s[1], fds_d[0], fds_d[1]);
     writeLog("MASTER to input    fdi_s: %d,%d  ", fdi_s[0], fdi_s[1]);
     writeLog("MASTER to drone    fdd_s: %d,%d  fds_d: %d,%d  ", fdd_s[0], fdd_s[1], fds_d[0], fds_d[1]);
     writeLog("MASTER to target   fdt_s: %d,%d  ", fdt_s[0], fdt_s[1]);
     writeLog("MASTER to obstacle fdo_s: %d,%d  ", fdo_s[0], fdo_s[1]);
+    writeLog("MASTER to rule     rule_pipe: %d,%d  ", rule_pipe[0], rule_pipe[1]);
 
     // --- Rule printing -------------------------------------------------------------------------------------------------
-    int fd6[2], rule_pipe[2];
-    char str_fd6[2][20], str_rule_pipe[2][20];
-
-    create_pipe(fd6, str_fd6);
-    create_pipe(rule_pipe, str_rule_pipe);
-
     // variabili per recupero informazioni
     int retVal_read;
     char read_buffer[256];
@@ -170,6 +178,8 @@ int main()
 
     ret_val = string_parser(read_buffer, first_arg, second_arg);
 
+    // avoid undeclared variable error
+    char *arg_list_socket_server[] = {NULL};
     if (ret_val == 0)
     {
         char *arg_list_socket_server[] = {"konsole", "-e", "./socket_server", first_arg, NULL};
@@ -182,7 +192,12 @@ int main()
     }
     
     //--- SOCKET SERVER process -------------------------------------------------------------------------------------------------
+    child_pids[5] = spawn("konsole", arg_list_socket_server);
+    writeLog("MASTER spawn socket server with pid: %d ", child_pids[5]);
 
+    // recive the correct pid from socket server
+    recive_correct_pid(rule_pipe, &child_pids_received[5]);
+    
 
     // --- GAME SERVER process ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     // Server process is execute with konsole so, the child_pid(correspond to the pid of the kosole) and the child_pid_received( correspod to the pid of process)
