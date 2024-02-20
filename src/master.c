@@ -16,6 +16,8 @@
 #include "arplib.h"
 #include "../config/config.h"
 
+int string_parser(char *string, char *first_arg, char *second_arg);
+
 
 int main()
 {
@@ -146,11 +148,12 @@ int main()
     int rule_pid, real_rule_pid;
     char *arg_list_rule_print[] = {"konsole", "-e", "./rule_print", str_fd6[0], str_fd6[1], str_rule_pipe[0], str_rule_pipe[1],NULL};
 
+    // create process and launch rule_print
     rule_pid = spawn("konsole", arg_list_rule_print);
     writeLog("MASTER spawn rule process with pid: %d ", rule_pid);
 
+    // recive the correct pid from rule_print
     recive_correct_pid(fd6, &real_rule_pid);
-
     writeLog("MASTER spawn rule process with real pid: %d ", real_rule_pid);
 
     // recuperare le informazioni per l'apertura del server socket
@@ -161,6 +164,23 @@ int main()
 
     printf("read_buffer from rule print: %s\n", read_buffer);
 
+    //parsing the string recived from rule_print
+    char first_arg[100], second_arg[100];
+    int ret_val;
+
+    ret_val = string_parser(read_buffer, first_arg, second_arg);
+
+    if (ret_val == 0)
+    {
+        char *arg_list_socket_server[] = {"konsole", "-e", "./socket_server", first_arg, NULL};
+        printf("first_arg: %s\n\n\n", first_arg);
+    }
+    else
+    {
+        char *arg_list_socket_server[] = {"konsole", "-e", "./socket_server", first_arg, second_arg, NULL};
+        printf("first_arg: %s  second_arg: %s\n\n\n", first_arg, second_arg);
+    }
+    
     //--- SOCKET SERVER process -------------------------------------------------------------------------------------------------
 
 
@@ -245,4 +265,24 @@ int main()
     }
     
     return 0;
+}
+
+int string_parser(char *string, char *first_arg, char *second_arg){
+    // define the char that separate the arguments in the string
+    char *separator = " ";
+    char *arg;
+    int ret_val;
+
+    arg = strtok(string, separator);
+    strcpy(first_arg, arg);
+
+    arg = strtok(NULL, separator);
+    if(arg == NULL){
+        ret_val = 0;
+    }else{  
+        ret_val = 1;
+        strcpy(second_arg, arg);
+    }
+
+    return ret_val;
 }
