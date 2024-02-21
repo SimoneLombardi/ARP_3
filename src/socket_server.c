@@ -105,8 +105,8 @@ int main(int argc, char *argv[]){
     writeLog("SOCKET SERVER: fds_ss   %d, %d", fds_ss[0], fds_ss[1]);
 
     // send pid to server
-    int input_pid = getpid();
-    if(write(fd7[1], &input_pid, sizeof(pid_t)) < 0){
+    int socket_server = getpid();
+    if(write(fd7[1], &socket_server, sizeof(pid_t)) < 0){
         perror("write pid in rule_print");
     }
 
