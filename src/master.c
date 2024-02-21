@@ -187,7 +187,7 @@ int main()
 
     // recive the correct pid from rule_print
     recive_correct_pid(fd6, &real_rule_pid);
-    writeLog("MASTER spawn rule process with real pid: %d ", real_rule_pid);
+    writeLog("MASTER RECIVED rule process real pid: %d ", real_rule_pid);
 
     // recuperare le informazioni per l'apertura del server socket
     if((retVal_read = read(rule_pipe[0], read_buffer, sizeof(read_buffer))) < 0){
@@ -223,7 +223,8 @@ int main()
     writeLog("MASTER spawn socket server with pid: %d ", child_pids[5]);
 
     // recive the correct pid from socket server
-    recive_correct_pid(rule_pipe, &child_pids_received[5]);
+    recive_correct_pid(fd7, &child_pids_received[5]);
+    writeLog("MASTER RECIVED socket server real pid: %d ", child_pids_received[5]);
     
 
     // --- GAME SERVER process ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -233,6 +234,7 @@ int main()
     writeLog("MASTER spawn server with pid: %d ", child_pids[0]);
     
     recive_correct_pid(fd1, &child_pids_received[0]);
+    writeLog("MASTER RECIVED server real pid: %d ", child_pids_received[0]);
 
     // --- INPUT process ----------------------------------------------------------------------------------------
     char *arg_list_i[] = {"konsole", "-e", "./input", str_fd2[0], str_fd2[1], str_fdi_s[0], str_fdi_s[1], NULL};
@@ -240,6 +242,7 @@ int main()
     writeLog("MASTER spawn input with pid: %d ", child_pids[1]);
     
     recive_correct_pid(fd2, &child_pids_received[1]);
+    writeLog("MASTER RECIVED input real pid: %d ", child_pids_received[1]);
 
     // --- DRONE process -------------------------------------------------------------------------------------------------
     char *arg_list_drone[] = {"./drone", str_fd3[0], str_fd3[1], str_fdd_s[0], str_fdd_s[1], str_fds_d[0], str_fds_d[1], NULL};
@@ -247,6 +250,7 @@ int main()
     writeLog("MASTER spawn drone with pid: %d ", child_pids[2]);
     
     recive_correct_pid(fd3, &child_pids_received[2]);
+    writeLog("MASTER RECIVED drone real pid: %d ", child_pids_received[2]);
 
     //---- TARGET process -----------------------------------------------------------------------------------------------------
     char *arg_list_target[] = {"./target", str_fd4[0], str_fd4[1], str_fdt_s[0], str_fdt_s[1], NULL};
@@ -254,6 +258,7 @@ int main()
     writeLog("MASTER spawn target with pid: %d ", child_pids[3]);
     
     recive_correct_pid(fd4, &child_pids_received[3]);
+    writeLog("MASTER RECIVED target real pid: %d ", child_pids_received[3]);
 
     //---- OBSTACLE process -------------------------------------------------------------------------------------------------------
     char *arg_list_obstacle[] = {"./obstacle", str_fd5[0], str_fd5[1], str_fdo_s[0], str_fdo_s[1], NULL};
@@ -261,6 +266,7 @@ int main()
     writeLog("MASTER spawn obstacle with pid: %d ", child_pids[4]);
     
     recive_correct_pid(fd5, &child_pids_received[4]);
+    writeLog("MASTER RECIVED obstacle real pid: %d ", child_pids_received[4]);
 
     // Convert the array child_pids in string
     for (i = 0; i < num_ps; i++)

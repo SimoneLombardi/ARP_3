@@ -64,9 +64,8 @@ int main(int argc, char *argv[]){
     getmaxyx(stdscr, Srow, Scol);
     refresh();
 
-
     // print the rules and wait to start the game
-    print_screen("../config/rule.txt", 18, 78, socket_info);
+    print_screen("../config/rule.txt", 23, 78, socket_info);
 
     endwin();
 
@@ -109,7 +108,7 @@ void print_screen(char *txt_path, int txt_row, int txt_col, char *buffer)
     }
 
     // check if the window is big enough
-    while (Srow < txt_row+4 || Scol < txt_col)
+    while (Srow < txt_row+5 || Scol < txt_col)
     {
         clear();
         mvaddstr((Srow / 2), ((Scol - strlen(resisize_request)) / 2), resisize_request);
@@ -123,11 +122,12 @@ void print_screen(char *txt_path, int txt_row, int txt_col, char *buffer)
     refresh();
 
     //create the window
-    rule_window = create_new_window(txt_row+2, Scol, 0, 0);
-    socket_info_window = create_new_window(Srow-(txt_row+3), Scol, getmaxy(rule_window), 0);
+    socket_info_window = create_new_window(3, Scol, Srow-3, 0);
+    rule_window = create_new_window(Srow-3, Scol, 0, 0);
+    
 
     // print the rules
-    int indx = 1;
+    int indx = (Srow - txt_row - 3)/2;
     while ((fgets(rule_line, sizeof(rule_line), screen_img)) != NULL)
     {
         mvwprintw(rule_window, indx, (Scol - strlen(rule_line)) / 2, "%s", rule_line);
