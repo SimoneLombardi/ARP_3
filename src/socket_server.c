@@ -81,12 +81,12 @@ int main(int argc, char *argv[]){
     fds_ss[0] = fd_array[5][0]; // server --> socket server/window size
     fds_ss[1] = fd_array[5][1];
 
-    writeLog("SOCKET SERVER: fd7 %d, %d", fd7[0], fd7[1]);
-    writeLog("SOCKET SERVER: fdt_s %d, %d", fdt_s[0], fdt_s[1]);
-    writeLog("SOCKET SERVER: fdo_s %d, %d", fdo_s[0], fdo_s[1]);
+    writeLog("SOCKET SERVER: fd7      %d, %d", fd7[0], fd7[1]);
+    writeLog("SOCKET SERVER: fdt_s    %d, %d", fdt_s[0], fdt_s[1]);
+    writeLog("SOCKET SERVER: fdo_s    %d, %d", fdo_s[0], fdo_s[1]);
     writeLog("SOCKET SERVER: fdss_s_t %d, %d", fdss_s_t[0], fdss_s_t[1]);
     writeLog("SOCKET SERVER: fdss_s_o %d, %d", fdss_s_o[0], fdss_s_o[1]);
-    writeLog("SOCKET SERVER: fds_ss %d, %d", fds_ss[0], fds_ss[1]);
+    writeLog("SOCKET SERVER: fds_ss   %d, %d", fds_ss[0], fds_ss[1]);
 
     // send pid to server
     int input_pid = getpid();

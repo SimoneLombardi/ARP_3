@@ -142,13 +142,12 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    writeLog("SERVER value of fd1 are:\t\t %d %d ", fd1[0], fd1[1]);
-    writeLog("SERVER value of fdi_s are:\t\t %d %d ", fdi_s[0], fdi_s[1]);
-    writeLog("SERVER value of fdd_s are:\t\t %d %d ", fdd_s[0], fdd_s[1]);
-    writeLog("SERVER value of fds_d are:\t\t %d %d ", fds_d[0], fds_d[1]);
-    writeLog("SERVER value of fdss_s_t are:\t %d %d ", fdss_s_t[0], fdss_s_t[1]);
-    writeLog("SERVER value of fdss_s_o are:\t %d %d ", fdss_s_o[0], fdss_s_o[1]);
-
+    writeLog("SERVER value of fd1 are:      %d %d ", fd1[0], fd1[1]);
+    writeLog("SERVER value of fdi_s are:    %d %d ", fdi_s[0], fdi_s[1]);
+    writeLog("SERVER value of fdd_s are:    %d %d ", fdd_s[0], fdd_s[1]);
+    writeLog("SERVER value of fds_d are:    %d %d ", fds_d[0], fds_d[1]);
+    writeLog("SERVER value of fdss_s_t are: %d %d ", fdss_s_t[0], fdss_s_t[1]);
+    writeLog("SERVER value of fdss_s_o are: %d %d ", fdss_s_o[0], fdss_s_o[1]);
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////
     //                    VARIABLE FOR DYNAMICS                                                         //
@@ -196,14 +195,6 @@ int main(int argc, char *argv[])
     // variabili di controllo per evitare di ristampare la mappa al ritmo del while
     int new_position, new_obstacles;
 
-    // read the set of target
-    if (read(fdss_s_t[0], set_of_target, sizeof(double) * MAX_TARG_ARR_SIZE * 2) == -1)
-    {
-        perror("server: read fdss_s_t[0]");
-        writeLog("==> ERROR ==> server:read fdss_s_t[0], %m ");
-        exit(EXIT_FAILURE);
-    }
-
     //////////////////////////////////////////////////////////////////////////////////////////
     //                     NCURSES INITIALIZATION                                           //
     //////////////////////////////////////////////////////////////////////////////////////////
@@ -233,6 +224,8 @@ int main(int argc, char *argv[])
     int spawn_Row = Srow - 2;
     writeLog("spawn_Col = %i, spawn_Row = %i", spawn_Col, spawn_Row);
 
+    ///////////////////// write to socket server /////////////////////////////////////////////////////////////
+
     rowSH = spawn_Row / 2; // definisco gli shift per traslare (0,0) al centro dello schermo
     colSH = spawn_Col / 2;
     writeLog("rowSH = %i, rowSH = %i", rowSH, colSH);
@@ -241,6 +234,13 @@ int main(int argc, char *argv[])
     spawn_window = newwin(spawn_Row, spawn_Col, 1, 1);
     wrefresh(spawn_window);
 
+    // read the set of target (blocking read)
+    if (read(fdss_s_t[0], set_of_target, sizeof(double) * MAX_TARG_ARR_SIZE * 2) == -1)
+    {
+        perror("server: read fdss_s_t[0]");
+        writeLog("==> ERROR ==> server:read fdss_s_t[0], %m ");
+        exit(EXIT_FAILURE);
+    }
     // moltiply the target for the reference system. I use the same reference system of the drone
     // The obstacle are between -1 and 1
     for (i = 0; i < MAX_TARG_ARR_SIZE; i++)
