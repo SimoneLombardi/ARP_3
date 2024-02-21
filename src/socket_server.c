@@ -19,7 +19,7 @@
 
 void pipe_fd_init(int fd_array[][2], char *argv[], int indx_offset){
     int j = 0;
-    for(int i = 0; i < 5; i++){
+    for(int i = 0; i < 6; i++){
         fd_array[i][0] = atoi(argv[j + indx_offset]);
         fd_array[i][1] = atoi(argv[j + indx_offset + 1]);
 
@@ -31,12 +31,14 @@ int main(int argc, char *argv[]){
 
     int fd_array[5][2];
     // str_fd7[0], str_fd7[1], str_fdt_s[0], str_fdt_s[1], str_fdo_s[0], str_fdo_s[1], str_fdss_s[0], str_fdss_s[1], str_fds_ss[0], str_fds_ss[1]
-    int fd7[2], fdt_s[2], fdo_s[2], fdss_s[2], fds_ss[2];
+    int fd7[2], fdt_s[2], fdo_s[2], fdss_s_t[2], fdss_s_o[2], fds_ss[2];
 
-    if (argc == 12){
+    printf("argc: %d\n", argc);
+
+    if (argc == 14){
         // gestisci i file descriptor
         pipe_fd_init(fd_array, argv, 2);
-    }else if(argc == 13){
+    }else if(argc == 15){
         // gestisci i file descriptor
         pipe_fd_init(fd_array, argv, 3);
     }
@@ -70,21 +72,25 @@ int main(int argc, char *argv[]){
     }
 
     // da capire cosa bisogna chiudere
-    fdss_s[0] = fd_array[3][0]; // socket server --> server
-    fdss_s[1] = fd_array[3][1];
+    fdss_s_t[0] = fd_array[3][0]; // socket server --> server/ target
+    fdss_s_t[1] = fd_array[3][1];
 
-    fds_ss[0] = fd_array[4][0]; // server --> socket server
-    fds_ss[1] = fd_array[4][1];
+    fdss_s_o[0] = fd_array[4][0]; // socket server --> server/ obstacle
+    fdss_s_o[1] = fd_array[4][1];
+
+    fds_ss[0] = fd_array[5][0]; // server --> socket server/window size
+    fds_ss[1] = fd_array[5][1];
 
     writeLog("SOCKET SERVER: fd7 %d, %d", fd7[0], fd7[1]);
     writeLog("SOCKET SERVER: fdt_s %d, %d", fdt_s[0], fdt_s[1]);
     writeLog("SOCKET SERVER: fdo_s %d, %d", fdo_s[0], fdo_s[1]);
-    writeLog("SOCKET SERVER: fdss_s %d, %d", fdss_s[0], fdss_s[1]);
+    writeLog("SOCKET SERVER: fdss_s_t %d, %d", fdss_s_t[0], fdss_s_t[1]);
+    writeLog("SOCKET SERVER: fdss_s_o %d, %d", fdss_s_o[0], fdss_s_o[1]);
     writeLog("SOCKET SERVER: fds_ss %d, %d", fds_ss[0], fds_ss[1]);
 
     // send pid to server
     int input_pid = getpid();
-    if(write(fd7[1], &input_pid, sizeof(input_pid)) < 0){
+    if(write(fd7[1], &input_pid, sizeof(pid_t)) < 0){
         perror("write pid in rule_print");
     }
 
