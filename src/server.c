@@ -588,7 +588,7 @@ int main(int argc, char *argv[])
 }
 
 //////////////////////////////////////////////////////////////////////////
-//                    FUNCRION SECTION                                  //
+//                    FUNCTION SECTION                                  //
 //////////////////////////////////////////////////////////////////////////
 void sigusr1Handler(int signum, siginfo_t *info, void *context)
 {
