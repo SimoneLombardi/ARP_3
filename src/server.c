@@ -142,12 +142,27 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
+    // Take the fds_ss for comunication between server -> socket_server, are in positions 13, 14
+    int fds_ss[2];
+    for (i = 13; i < 15; i++)
+    {
+        fds_ss[i - 13] = atoi(argv[i]);
+    }
+
+    // close the read file descriptor fds_ss[0, server only write from socket_server
+    if (close(fds_ss[0]) < 0)
+    {
+        perror("server: close fds_ss[0]");
+        writeLog("ERROR ==> server: close fds_ss[0], %m ");
+    }
+
     writeLog("SERVER value of fd1 are:      %d %d ", fd1[0], fd1[1]);
     writeLog("SERVER value of fdi_s are:    %d %d ", fdi_s[0], fdi_s[1]);
     writeLog("SERVER value of fdd_s are:    %d %d ", fdd_s[0], fdd_s[1]);
     writeLog("SERVER value of fds_d are:    %d %d ", fds_d[0], fds_d[1]);
     writeLog("SERVER value of fdss_s_t are: %d %d ", fdss_s_t[0], fdss_s_t[1]);
     writeLog("SERVER value of fdss_s_o are: %d %d ", fdss_s_o[0], fdss_s_o[1]);
+    writeLog("SERVER value of fds_ss are:   %d %d ", fds_ss[0], fds_ss[1]);
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////
     //                    VARIABLE FOR DYNAMICS                                                         //
@@ -222,9 +237,16 @@ int main(int argc, char *argv[])
     // window for printing the drone, obst, targh
     int spawn_Col = Scol - 2;
     int spawn_Row = Srow - 2;
+    int window_size[2] = {spawn_Row, spawn_Col};
     writeLog("spawn_Col = %i, spawn_Row = %i", spawn_Col, spawn_Row);
 
     ///////////////////// write to socket server /////////////////////////////////////////////////////////////
+    if (write(fds_ss[1], window_size, sizeof(int) * 2) == -1)
+    {
+        perror("server: write fds_ss[1]");
+        writeLog("==> ERROR ==> server: write fds_ss[1], %m ");
+        exit(EXIT_FAILURE);
+    }
 
     rowSH = spawn_Row / 2; // definisco gli shift per traslare (0,0) al centro dello schermo
     colSH = spawn_Col / 2;

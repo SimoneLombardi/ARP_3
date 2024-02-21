@@ -29,6 +29,9 @@ void pipe_fd_init(int fd_array[][2], char *argv[], int indx_offset){
 
 int main(int argc, char *argv[]){
 
+    // widnow size
+    int *widn_size = malloc(sizeof(int)*2); // [row, col]
+
     int fd_array[5][2];
     // str_fd7[0], str_fd7[1], str_fdt_s[0], str_fdt_s[1], str_fdo_s[0], str_fdo_s[1], str_fdss_s[0], str_fdss_s[1], str_fds_ss[0], str_fds_ss[1]
     int fd7[2], fdt_s[2], fdo_s[2], fdss_s_t[2], fdss_s_o[2], fds_ss[2];
@@ -55,6 +58,7 @@ int main(int argc, char *argv[]){
 
     if(close(fd7[0]) < 0){
         perror("Errore nella chiusura del file descriptor fd7[0]");
+        writeLog("===> ERROR ===> socket server: close fd7[0], %m");
     }
 
     fdt_s[0] = fd_array[1][0]; // target --> socket server
@@ -62,6 +66,7 @@ int main(int argc, char *argv[]){
 
     if(close(fdt_s[1]) < 0){
         perror("Errore nella chiusura del file descriptor fdt_s[1]");
+        writeLog("===> ERROR ===> socket server: close fdt_s[1], %m");
     }
 
     fdo_s[0] = fd_array[2][0]; // obstacle --> socket server
@@ -69,14 +74,25 @@ int main(int argc, char *argv[]){
 
     if(close(fdo_s[1]) < 0){
         perror("Errore nella chiusura del file descriptor fdo_s[1]");
+        writeLog("===> ERROR ===> socket server: close fdo_s[1], %m");
     }
 
     // da capire cosa bisogna chiudere
     fdss_s_t[0] = fd_array[3][0]; // socket server --> server/ target
     fdss_s_t[1] = fd_array[3][1];
 
+    if(close(fdss_s_t[0]) < 0){// closed reading fd for targhet
+        perror("Errore nella chiusura del file descriptor fdss_s_t[0]");
+        writeLog("===> ERROR ===> socket server: close fdss_s_t[0], %m");
+    }
+
     fdss_s_o[0] = fd_array[4][0]; // socket server --> server/ obstacle
     fdss_s_o[1] = fd_array[4][1];
+
+    if(close(fdss_s_o[0]) < 0){// closed reading fd for obstacle
+        perror("Errore nella chiusura del file descriptor fdss_s_o[0]");
+        writeLog("===> ERROR ===> socket server: close fdss_s_o[0], %m");
+    }
 
     fds_ss[0] = fd_array[5][0]; // server --> socket server/window size
     fds_ss[1] = fd_array[5][1];
@@ -94,7 +110,17 @@ int main(int argc, char *argv[]){
         perror("write pid in rule_print");
     }
 
-    getchar();
-    
+    //////////////////////////////////////////////// inizio lavoro socket server //////////////////////////////////////////////////
+    // reciveing the window size
+    if(read(fds_ss[0], widn_size, sizeof(int)*2) < 0){
+        perror("read Srow in socket server");
+        writeLog("===> ERROR ===> socket server: read Srow, %m");
+    }
+    writeLog("SOCKET SERVER: window size row: %d, col: %d", widn_size[0], widn_size[1]);
+
+    while(1){
+        sleep(1);
+    }
+
     return 0;
 }
