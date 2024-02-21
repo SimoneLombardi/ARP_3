@@ -1,6 +1,7 @@
 /* Library with all the functions of the project*/
 #include "arplib.h"
 #include <stdio.h>
+#include <string.h>
 #include <stdarg.h>
 #include <time.h>
 #include <stdlib.h>
@@ -29,32 +30,52 @@ int spawn(const char *program, char **arg_list)
 }
 
 /* function for write in logfile*/
-void writeLog(const char *format, ...)
-{
 
+
+void writeLog(const char *format, ...) {
+    // Open the log file for appending
     FILE *logfile = fopen("../log/logfile.txt", "a");
-    if (logfile == NULL)
-    {
+    if (logfile == NULL) {
         perror("server: error opening logfile");
         exit(EXIT_FAILURE);
     }
+
+    // Initialize the variable argument list
     va_list args;
     va_start(args, format);
 
+    // Get the current time
     time_t current_time;
     time(&current_time);
 
-    fprintf(logfile, "%s => ", ctime(&current_time));
-    vfprintf(logfile, format, args);
+    // Get the local time structure
+    struct tm *local_time = localtime(&current_time);
 
+    // Get the current time in the format HH:MM:SS
+    char time_str[9];
+    strftime(time_str, sizeof(time_str), "%H:%M:%S", local_time);
+
+    // Print the time on a separate line
+    fprintf(logfile, "%s =>\t", time_str);
+
+    // Print the log message on a new line with a newline character
+    vfprintf(logfile, format, args);
+    fprintf(logfile, "\n");
+
+    // Clean up the variable argument list
     va_end(args);
+
+    // Flush the file stream to ensure the message is written immediately
     fflush(logfile);
-    if (fclose(logfile) == -1)
-    {
+
+    // Close the log file, handle errors if closing fails
+    if (fclose(logfile) == -1) {
         perror("fclose logfile");
+        // Log an error message if closing the file fails
         writeLog("ERROR ==> server: fclose logfile");
     }
 }
+
 
 // return sign of arg X
 int sign(int x)
