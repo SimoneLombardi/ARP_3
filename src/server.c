@@ -61,7 +61,6 @@ int main(int argc, char *argv[])
     {
         fd1[i - 1] = atoi(argv[i]);
     }
-    writeLog("SERVER value of fd1 are: %d %d ", fd1[0], fd1[1]);
 
     // close the read fiel descriptor fd1[0]
     if (close(fd1[0]) < 0)
@@ -97,56 +96,59 @@ int main(int argc, char *argv[])
         writeLog("ERROR ==> server: close fdi_s[1], %m ");
         exit(EXIT_FAILURE);
     }
-    writeLog("SERVER value of fdi_s are: %d %d ", fdi_s[0], fdi_s[1]);
 
     //// Take the fdd_s for comunication drone-server, fdd_s are in positions 5, 6
+    // This pipe is usefull for send and receive data from server to drone (is used for dynamics)
     int fdd_s[2];
     for (i = 5; i < 7; i++)
     {
         fdd_s[i - 5] = atoi(argv[i]);
     }
-    // This pipe is usefull for send and receive data from server to drone (is used for dynamics)
-    writeLog("SERVER value of fdd_s are: %d %d ", fdd_s[0], fdd_s[1]);
 
     //// Take the fds_t dor the comunication between server -> drone, are in positions 11, 12
     int fds_d[2];
-    for (i = 11; i < 13; i++)
-    {
-        fds_d[i - 11] = atoi(argv[i]);
-    }
-    writeLog("SERVER value of fds_d are: %d %d ", fds_d[0], fds_d[1]);
-
-    //// Take the fdt_s for comunication between targer-server, position 7, 8
-    int fdt_s[2];
     for (i = 7; i < 9; i++)
     {
-        fdt_s[i - 7] = atoi(argv[i]);
-    }
-    writeLog("SERVER value of fdt_s are: %d %d ", fdt_s[0], fdt_s[1]);
-
-    // close the write file descriptor fdt_s[1], server only read from target
-    if (close(fdt_s[1]) < 0)
-    {
-        perror("server: close fdt_s[1]");
-        writeLog("ERROR ==> server: close fdt_s[1], %m ");
-        exit(EXIT_FAILURE);
+        fds_d[i - 7] = atoi(argv[i]);
     }
 
-    //// Take the fdo_s for comunication between obstacle-server, position 9, 10
-    int fdo_s[2];
+    //// Take the fdss_s_t for comunication between socket_server-server-target, position 7, 8
+    int fdss_s_t[2];
     for (i = 9; i < 11; i++)
     {
-        fdo_s[i - 9] = atoi(argv[i]);
+        fdss_s_t[i - 9] = atoi(argv[i]);
     }
-    writeLog("SERVER value of fdo_s are: %d %d ", fdo_s[0], fdo_s[1]);
 
-    // close the write file descriptor fdo_s[1], server only read from object
-    if (close(fdo_s[1]) < 0)
+    // close the write file descriptor fdss_s_t[1], server only read from target
+    if (close(fdss_s_t[1]) < 0)
     {
-        perror("server: close fdo_s[1]");
-        writeLog("ERROR ==> server: close fdo_s[1], %m ");
+        perror("server: close fdss_s_t[1]");
+        writeLog("ERROR ==> server: close fdss_s_t[1], %m ");
         exit(EXIT_FAILURE);
     }
+
+    //// Take the fdss_s_o for comunication between obstacle-server, position 9, 10
+    int fdss_s_o[2];
+    for (i = 11; i < 13; i++)
+    {
+        fdss_s_o[i - 11] = atoi(argv[i]);
+    }
+
+    // close the write file descriptor fdss_s_o[1], server only read from object
+    if (close(fdss_s_o[1]) < 0)
+    {
+        perror("server: close fdss_s_o[1]");
+        writeLog("ERROR ==> server: close fdss_s_o[1], %m ");
+        exit(EXIT_FAILURE);
+    }
+
+    writeLog("SERVER value of fd1 are:\t\t %d %d ", fd1[0], fd1[1]);
+    writeLog("SERVER value of fdi_s are:\t\t %d %d ", fdi_s[0], fdi_s[1]);
+    writeLog("SERVER value of fdd_s are:\t\t %d %d ", fdd_s[0], fdd_s[1]);
+    writeLog("SERVER value of fds_d are:\t\t %d %d ", fds_d[0], fds_d[1]);
+    writeLog("SERVER value of fdss_s_t are:\t %d %d ", fdss_s_t[0], fdss_s_t[1]);
+    writeLog("SERVER value of fdss_s_o are:\t %d %d ", fdss_s_o[0], fdss_s_o[1]);
+
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////
     //                    VARIABLE FOR DYNAMICS                                                         //
@@ -184,21 +186,21 @@ int main(int argc, char *argv[])
     fd_set read_fd;
     struct timeval time_sel;
 
-    // define the array wit all the read file descritor (fdd_s: drone -> server, fdo_s: obstacle -> server, fdi_s: input -> server)
-    int fd_array[3] = {fdd_s[0], fdo_s[0], fdi_s[0]};
+    // define the array wit all the read file descritor (fdd_s: drone -> server, fdss_s_o: obstacle -> server, fdi_s: input -> server)
+    int fd_array[3] = {fdd_s[0], fdss_s_o[0], fdi_s[0]};
     // find the maximum fd
     int max_fd;
-    max_fd = (fdd_s[0] > fdo_s[0]) ? fdd_s[0] : fdo_s[0];
+    max_fd = (fdd_s[0] > fdss_s_o[0]) ? fdd_s[0] : fdss_s_o[0];
     max_fd = (max_fd > fdi_s[0]) ? max_fd : fdi_s[0];
 
     // variabili di controllo per evitare di ristampare la mappa al ritmo del while
     int new_position, new_obstacles;
 
     // read the set of target
-    if (read(fdt_s[0], set_of_target, sizeof(double) * MAX_TARG_ARR_SIZE * 2) == -1)
+    if (read(fdss_s_t[0], set_of_target, sizeof(double) * MAX_TARG_ARR_SIZE * 2) == -1)
     {
-        perror("server: read fdt_s[0]");
-        writeLog("==> ERROR ==> server:read fdt_s[0], %m ");
+        perror("server: read fdss_s_t[0]");
+        writeLog("==> ERROR ==> server:read fdss_s_t[0], %m ");
         exit(EXIT_FAILURE);
     }
 
@@ -262,7 +264,7 @@ int main(int argc, char *argv[])
         // define the set of fd
         FD_ZERO(&read_fd);
         FD_SET(fdd_s[0], &read_fd);
-        FD_SET(fdo_s[0], &read_fd);
+        FD_SET(fdss_s_o[0], &read_fd);
         FD_SET(fdi_s[0], &read_fd);
 
         // time interval for select
@@ -312,17 +314,17 @@ int main(int argc, char *argv[])
                             new_position = 1;
                         }
                     }
-                    else if (fd_array[i] == fdo_s[0]) // <<<< obstacle - server >>>>
+                    else if (fd_array[i] == fdss_s_o[0]) // <<<< obstacle - server >>>>
                     {
                         // read the set of obstacle
                         do
                         {
-                            retVal_read = read(fdo_s[0], set_of_obstacle, sizeof(double) * MAX_OBST_ARR_SIZE * 2);
+                            retVal_read = read(fdss_s_o[0], set_of_obstacle, sizeof(double) * MAX_OBST_ARR_SIZE * 2);
                         } while (retVal_read == -1 && errno == EINTR);
                         if (retVal_read == -1)
                         {
-                            perror("server: read fdo_s[0]");
-                            writeLog("==> ERROR ==> server:read fdo_s[0], %m ");
+                            perror("server: read fdss_s_o[0]");
+                            writeLog("==> ERROR ==> server:read fdss_s_o[0], %m ");
                             exit(EXIT_FAILURE);
                         }
                         else
@@ -571,10 +573,10 @@ int main(int argc, char *argv[])
         writeLog("==> ERROR ==> server: close fdi_s[0] %m");
         exit(EXIT_FAILURE);
     }
-    if (close(fdo_s[0] == -1))
+    if (close(fdss_s_o[0] == -1))
     {
-        perror("server: close fdo_s[0]");
-        writeLog("==> ERROR ==> server: close fdo_s[0] %m");
+        perror("server: close fdss_s_o[0]");
+        writeLog("==> ERROR ==> server: close fdss_s_o[0] %m");
         exit(EXIT_FAILURE);
     }
     if (close(fdd_s[0] == -1))
@@ -588,7 +590,7 @@ int main(int argc, char *argv[])
 }
 
 //////////////////////////////////////////////////////////////////////////
-//                    FUNCRION SECTION                                  //
+//                    FUNCTION SECTION                                  //
 //////////////////////////////////////////////////////////////////////////
 void sigusr1Handler(int signum, siginfo_t *info, void *context)
 {

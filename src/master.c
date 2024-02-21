@@ -140,13 +140,19 @@ int main()
 
     create_pipe(fdo_s, str_fdo_s);
 
-    //// Pipe for comunication between SOCKET SERVER and SERVER
-    int fdss_s[2];
-    char str_fdss_s[2][20];
+    //// Pipe for comunication between SOCKET SERVER and SERVER send Target
+    int fdss_s_t[2];
+    char str_fdss_s_t[2][20];
 
-    create_pipe(fdss_s, str_fdss_s);
+    create_pipe(fdss_s_t, str_fdss_s_t);
 
-    //// Pipe for comunication between SERVER and SOCKET SERVER
+    //// Pipe for comunication between SERVER and SOCKET SERVER send Obstacle
+    int fdss_s_o[2];
+    char str_fdss_s_o[2][20];
+
+    create_pipe(fdss_s_o, str_fdss_s_o);
+
+    //// Pipe for comunication between SERVER and SOCKET SERVER send Window_Size
     int fds_ss[2];
     char str_fds_ss[2][20];
 
@@ -159,13 +165,13 @@ int main()
     create_pipe(rule_pipe, str_rule_pipe);
 
     // write log for debug
-    writeLog("MASTER to server           fdi_s: %d,%d  fdd_s: %d,%d  fds_d: %d,%d   fdss_s: %d,%d  fds_ss: %d,%d", fdi_s[0], fdi_s[1], fdd_s[0], fdd_s[1], fds_d[0], fds_d[1], fdss_s[0], fdss_s[1],  fds_ss[0], fds_ss[1]);
-    writeLog("MASTER to socket server    fdt_s: %d,%d  fdo_s: %d,%d  fdss_s: %d,%d  fds_ss: %d,%d ", fdt_s[0], fdt_s[1], fdo_s[0], fdo_s[1], fdss_s[0], fdss_s[1], fds_ss[0], fds_ss[1]);
+    writeLog("MASTER to server           fdi_s: %d,%d  fdd_s: %d,%d  fds_d: %d,%d   fdss_s_t: %d,%d  fds_ss: %d,%d", fdi_s[0], fdi_s[1], fdd_s[0], fdd_s[1], fds_d[0], fds_d[1], fdss_s_t[0], fdss_s_t[1],  fds_ss[0], fds_ss[1]);
+    writeLog("MASTER to socket server    fdt_s: %d,%d  fdo_s: %d,%d  fdss_s_t: %d,%d  fdss_s_o:%d,%d  fds_ss: %d,%d" , fdt_s[0], fdt_s[1], fdo_s[0], fdo_s[1], fdss_s_t[0], fdss_s_t[1], fdss_s_o[0], fdss_s_o[1], fds_ss[0], fds_ss[1]);
     writeLog("MASTER to input            fdi_s: %d,%d  ", fdi_s[0], fdi_s[1]);
     writeLog("MASTER to drone            fdd_s: %d,%d  fds_d: %d,%d  ", fdd_s[0], fdd_s[1], fds_d[0], fds_d[1]);
     writeLog("MASTER to target           fdt_s: %d,%d  ", fdt_s[0], fdt_s[1]);
     writeLog("MASTER to obstacle         fdo_s: %d,%d  ", fdo_s[0], fdo_s[1]);
-    writeLog("MASTER to rule         rule_pipe: %d,%d  ", rule_pipe[0], rule_pipe[1]);
+    writeLog("MASTER to rule             rule_pipe: %d,%d  ", rule_pipe[0], rule_pipe[1]);
 
     // --- Rule printing -------------------------------------------------------------------------------------------------
     // variabili per recupero informazioni
@@ -197,8 +203,8 @@ int main()
 
     ret_val = string_parser(read_buffer, first_arg, second_arg);
 
-    char *arg_list_socket_server_1[] = {"konsole", "-e", "./socket_server", first_arg, str_fd7[0], str_fd7[1], str_fdt_s[0], str_fdt_s[1], str_fdo_s[0], str_fdo_s[1], str_fdss_s[0], str_fdss_s[1], str_fds_ss[0], str_fds_ss[1], NULL}; 
-    char *arg_list_socket_server_2[] = {"konsole", "-e", "./socket_server", first_arg, second_arg, str_fd7[0], str_fd7[1], str_fdt_s[0], str_fdt_s[1], str_fdo_s[0], str_fdo_s[1] , str_fdss_s[0], str_fdss_s[1], str_fds_ss[0], str_fds_ss[1], NULL};
+    char *arg_list_socket_server_1[] = {"konsole", "-e", "./socket_server", first_arg, str_fd7[0], str_fd7[1], str_fdt_s[0], str_fdt_s[1], str_fdo_s[0], str_fdo_s[1], str_fdss_s_t[0], str_fdss_s_t[1], str_fdss_s_o[0], str_fdss_s_o[1], str_fds_ss[0], str_fds_ss[1], NULL}; 
+    char *arg_list_socket_server_2[] = {"konsole", "-e", "./socket_server", first_arg, second_arg, str_fd7[0], str_fd7[1], str_fdt_s[0], str_fdt_s[1], str_fdo_s[0], str_fdo_s[1] , str_fdss_s_t[0], str_fdss_s_t[1], str_fdss_s_o[0], str_fdss_s_o[1], str_fds_ss[0], str_fds_ss[1], NULL};
 
     
     
@@ -222,7 +228,7 @@ int main()
 
     // --- GAME SERVER process ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     // Server process is execute with konsole so, the child_pid(correspond to the pid of the kosole) and the child_pid_received( correspod to the pid of process)
-    char *arg_list_server[] = {"konsole", "-e", "./server", str_fd1[0], str_fd1[1], str_fdi_s[0], str_fdi_s[1], str_fdd_s[0], str_fdd_s[1], str_fds_d[0], str_fds_d[1], str_fdss_s[0], str_fdss_s[1], str_fds_ss[0], str_fds_ss[1], NULL}; 
+    char *arg_list_server[] = {"konsole", "-e", "./server", str_fd1[0], str_fd1[1], str_fdi_s[0], str_fdi_s[1], str_fdd_s[0], str_fdd_s[1], str_fds_d[0], str_fds_d[1], str_fdss_s_t[0], str_fdss_s_t[1], str_fdss_s_o[0], str_fdss_s_o[1], str_fds_ss[0], str_fds_ss[1], NULL}; 
     child_pids[0] = spawn("konsole", arg_list_server);
     writeLog("MASTER spawn server with pid: %d ", child_pids[0]);
     
