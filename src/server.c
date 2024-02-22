@@ -193,10 +193,10 @@ int main(int argc, char *argv[])
     int counter = 0;
 
     int result;
-    int retVal_read;
-
+    
     // variable for select
     int retVal_sel;
+    int retVal_read;
     fd_set read_fd;
     struct timeval time_sel;
 
