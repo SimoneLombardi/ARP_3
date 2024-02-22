@@ -29,6 +29,8 @@ void destroy_win(WINDOW *local_win);
 
 int signum(int x);
 
+
+
 int main(int argc, char *argv[])
 {
     // variable usefull for the for cycle
@@ -61,14 +63,8 @@ int main(int argc, char *argv[])
     {
         fd1[i - 1] = atoi(argv[i]);
     }
-
     // close the read fiel descriptor fd1[0]
-    if (close(fd1[0]) < 0)
-    {
-        perror("server: close fd1[1]");
-        writeLog("ERROR ==> server: close fd1[0], %m ");
-        exit(EXIT_FAILURE);
-    }
+    closeAndLog(fd1[0], "server: close fd1[0]");
     // write the pid in the pipe
     if (write(fd1[1], &server_pid, sizeof(server_pid)) < 0)
     {
@@ -76,12 +72,7 @@ int main(int argc, char *argv[])
         writeLog("ERROR ==> server, write fd1[1] %m ");
         exit(EXIT_FAILURE);
     }
-    if (close(fd1[1]) < 0)
-    {
-        perror("server: close fd1[1]");
-        writeLog("ERROR ==> server: close fd1[1], %m ");
-        exit(EXIT_FAILURE);
-    }
+    closeAndLog(fd1[1], "server: close fd1[1]");  
 
     //// Take the fdi_s for comunication input-server, fdi_s are in positions 3, 4
     int fdi_s[2];
@@ -90,12 +81,7 @@ int main(int argc, char *argv[])
         fdi_s[i - 3] = atoi(argv[i]);
     }
     // close the write file descriptor fdi_s[1], server only read from input
-    if (close(fdi_s[1]) < 0)
-    {
-        perror("server: close fdi_s[1]");
-        writeLog("ERROR ==> server: close fdi_s[1], %m ");
-        exit(EXIT_FAILURE);
-    }
+    closeAndLog(fdi_s[1], "server: close fdi_s[1]");
 
     //// Take the fdd_s for comunication drone-server, fdd_s are in positions 5, 6
     // This pipe is usefull for send and receive data from server to drone (is used for dynamics)
@@ -104,6 +90,7 @@ int main(int argc, char *argv[])
     {
         fdd_s[i - 5] = atoi(argv[i]);
     }
+    closeAndLog(fdd_s[1], "server: close fdd_s[1]");
 
     //// Take the fds_t dor the comunication between server -> drone, are in positions 11, 12
     int fds_d[2];
@@ -111,6 +98,7 @@ int main(int argc, char *argv[])
     {
         fds_d[i - 7] = atoi(argv[i]);
     }
+    closeAndLog(fds_d[0], "server: close fds_d[0]");
 
     //// Take the fdss_s_t for comunication between socket_server-server-target, position 7, 8
     int fdss_s_t[2];
@@ -118,43 +106,27 @@ int main(int argc, char *argv[])
     {
         fdss_s_t[i - 9] = atoi(argv[i]);
     }
-
     // close the write file descriptor fdss_s_t[1], server only read from target
-    if (close(fdss_s_t[1]) < 0)
-    {
-        perror("server: close fdss_s_t[1]");
-        writeLog("ERROR ==> server: close fdss_s_t[1], %m ");
-        exit(EXIT_FAILURE);
-    }
-
+    closeAndLog(fdss_s_t[1], "server: close fdss_s_t[1]");
+   
     //// Take the fdss_s_o for comunication between obstacle-server, position 9, 10
     int fdss_s_o[2];
     for (i = 11; i < 13; i++)
     {
         fdss_s_o[i - 11] = atoi(argv[i]);
     }
-
     // close the write file descriptor fdss_s_o[1], server only read from object
-    if (close(fdss_s_o[1]) < 0)
-    {
-        perror("server: close fdss_s_o[1]");
-        writeLog("ERROR ==> server: close fdss_s_o[1], %m ");
-        exit(EXIT_FAILURE);
-    }
-
+    closeAndLog(fdss_s_o[1], "server: close fdss_s_o[1]");
+  
     // Take the fds_ss for comunication between server -> socket_server, are in positions 13, 14
     int fds_ss[2];
     for (i = 13; i < 15; i++)
     {
         fds_ss[i - 13] = atoi(argv[i]);
     }
-
     // close the read file descriptor fds_ss[0, server only write from socket_server
-    if (close(fds_ss[0]) < 0)
-    {
-        perror("server: close fds_ss[0]");
-        writeLog("ERROR ==> server: close fds_ss[0], %m ");
-    }
+    closeAndLog(fds_ss[1], "server: close fds_ss[0]");
+
 
     writeLog("SERVER value of fd1 are:      %d %d ", fd1[0], fd1[1]);
     writeLog("SERVER value of fdi_s are:    %d %d ", fdi_s[0], fdi_s[1]);
@@ -193,7 +165,7 @@ int main(int argc, char *argv[])
     int counter = 0;
 
     int result;
-    
+
     // variable for select
     int retVal_sel;
     int retVal_read;
@@ -583,31 +555,11 @@ int main(int argc, char *argv[])
     } // while(1) end --> if all the target are reached, we exit from this cycle
 
     // close all the open file desciptor
-    if (close(fds_d[1] == -1))
-    {
-        perror("server: close fds_d[1]");
-        writeLog("==> ERROR ==> server: close fds_d[1] %m");
-        exit(EXIT_FAILURE);
-    }
-    if (close(fdi_s[0] == -1))
-    {
-        perror("server: close fdi_s[0]");
-        writeLog("==> ERROR ==> server: close fdi_s[0] %m");
-        exit(EXIT_FAILURE);
-    }
-    if (close(fdss_s_o[0] == -1))
-    {
-        perror("server: close fdss_s_o[0]");
-        writeLog("==> ERROR ==> server: close fdss_s_o[0] %m");
-        exit(EXIT_FAILURE);
-    }
-    if (close(fdd_s[0] == -1))
-    {
-        perror("server: close fdd_s[0]");
-        writeLog("==> ERROR ==> server: close fdd_s[0] %m");
-        exit(EXIT_FAILURE);
-    }
-
+    closeAndLog(fds_d[1], "server: close fds_d[1]");
+    closeAndLog(fdi_s[0], "server: close fdi_s[0]");
+    closeAndLog(fdss_s_o[0], "server: close fdss_s_o[0]");
+    closeAndLog(fdd_s[0], "server: close fdd_s[0]");
+    
     return 0;
 }
 

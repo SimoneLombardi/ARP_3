@@ -103,6 +103,16 @@ void create_pipe(int pipe_fd[], char string_pipe_fd[][20]){
     }
 }
 
+// close file descriptor and write on logfile
+void closeAndLog(int fd, const char *descriptorName) {
+    if (close(fd) < 0) {
+        perror(descriptorName);
+        // Assuming writeLog is a function for logging errors
+        writeLog("ERROR ==> %s, %m", descriptorName);
+        exit(EXIT_FAILURE);
+    }
+}
+
 // save the real pid of the process
 // ARGS: 1) pipe array fd, 2) address of the variable to save the pid ex: &child_pids_received[i]
 void recive_correct_pid(int pipe_fd[2], int *pid_address){
