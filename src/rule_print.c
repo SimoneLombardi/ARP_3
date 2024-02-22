@@ -73,7 +73,7 @@ int main(int argc, char *argv[]){
 
     // print the rules and wait to start the game
     do{
-        print_screen("../config/rule.txt", 23, 78, socket_info);
+        print_screen("../config/rule.txt", 22, 78, socket_info);
 
         ret_val = string_parser(socket_info, first_arg, second_arg);
 
@@ -121,15 +121,10 @@ int string_parser(char *string, char *first_arg, char *second_arg){
 int input_validation(int ret_val, char *first_arg, char *second_arg){
     int temp, ctrl;
     if(ret_val == 0){
-        if(strcmp(first_arg, "singleplayer") == 0){
-            return 1;
+        if(strcmp(first_arg, "singleplayer") != 0){
+            return 0;
         }else{
-            temp = atoi(first_arg);
-            if(temp >= 49152 && temp <= 65535){
-                return 1;
-            }else{
-                return 0;
-            }    
+            return 1;   
         }
     }else{
         ctrl = 1;

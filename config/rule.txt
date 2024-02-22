@@ -19,5 +19,4 @@ V : down rigth
 
 to select different game mode insert
 solo : "singleplayer"
-server : <"port number">
-client : <"ip address"> <"port number">
+multi : <"ip address"> <"port number">
