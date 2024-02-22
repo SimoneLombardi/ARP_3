@@ -113,6 +113,14 @@ void closeAndLog(int fd, const char *descriptorName) {
     }
 }
 
+// function for check the error
+void error(char *descriptorName){
+    perror(descriptorName);
+    // Assuming writeLog is a function for logging errors
+    writeLog("ERROR ==> %s, %m", descriptorName);
+    exit(EXIT_FAILURE);    
+}
+
 // save the real pid of the process
 // ARGS: 1) pipe array fd, 2) address of the variable to save the pid ex: &child_pids_received[i]
 void recive_correct_pid(int pipe_fd[2], int *pid_address){
@@ -135,15 +143,5 @@ void recive_correct_pid(int pipe_fd[2], int *pid_address){
     }
 }
 
-/*
-void error(char *process_name, char *sys_call){
-    char temp[100];
 
 
-    spritf(temp, "%s : %s", process_name, sys_call);
-    perror(temp);
-
-    sprintf(temp, "==> ERROR ==> %s: %s", process_name, sys_call);
-    strcat(temp, " -- %m");
-    writeLog(temp);
-}*/

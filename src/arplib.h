@@ -17,7 +17,7 @@ void recive_correct_pid(int pipe_fd[2], int *pid_address);
 
 void closeAndLog(int fd, const char *descriptorName);
 
-//void error(char *process_name, char *sys_call);
+void error(char *descriptorName);
 
 
 
