@@ -36,4 +36,10 @@
 // Seconds of upgrade of the obstacles
 #define N 5
 
+//----- def for socket_server -----//
+#define SAI struct sockaddr_in
+#define SA struct sockadd
+#define MAX_MSG_LENGHT 1024
+
+
 #endif // CONFIG_H

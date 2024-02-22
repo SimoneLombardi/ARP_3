@@ -15,6 +15,9 @@
 #include <ncurses.h>
 #include <ctype.h>
 #include <errno.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include "arplib.h"
 #include "../config/config.h"
 
@@ -243,8 +246,38 @@ int main(int argc, char *argv[])
     else
     {
         // MULTIPLYER MODE
-        
+        pid_t server_pid, client_pid;
 
+        if ((server_pid = fork()) < 0)
+        {
+            error("socket server: fork server_pid");
+        }
+
+        if (server_pid != 0)
+        {
+            if ((client_pid = fork()) < 0)
+            {
+                error("socket server: fork client_pid");
+            }
+        }
+        if (server_pid == 0)
+        {
+            // server child process
+            while (1)
+            {
+                
+
+
+            }
+        }
+        if (client_pid == 0)
+        {
+            // client child process
+            while (1)
+            {
+
+            }
+        }
     }
 
     return 0;
