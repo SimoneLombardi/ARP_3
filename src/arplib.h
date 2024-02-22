@@ -15,5 +15,10 @@ void create_pipe(int pipe_fd[], char string_pipe_fd[][20]);
 
 void recive_correct_pid(int pipe_fd[2], int *pid_address);
 
+void closeAndLog(int fd, const char *descriptorName);
+
+//void error(char *process_name, char *sys_call);
+
+
 
 #endif //ARPLIB_H

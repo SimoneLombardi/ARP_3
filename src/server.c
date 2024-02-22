@@ -125,7 +125,7 @@ int main(int argc, char *argv[])
         fds_ss[i - 13] = atoi(argv[i]);
     }
     // close the read file descriptor fds_ss[0, server only write from socket_server
-    closeAndLog(fds_ss[1], "server: close fds_ss[0]");
+    closeAndLog(fds_ss[0], "server: close fds_ss[0]");
 
 
     writeLog("SERVER value of fd1 are:      %d %d ", fd1[0], fd1[1]);
@@ -229,12 +229,16 @@ int main(int argc, char *argv[])
     wrefresh(spawn_window);
 
     // read the set of target (blocking read)
-    if (read(fdss_s_t[0], set_of_target, sizeof(double) * MAX_TARG_ARR_SIZE * 2) == -1)
+    if ((retVal_read = read(fdss_s_t[0], set_of_target, sizeof(double) * MAX_TARG_ARR_SIZE * 2)) == -1)
     {
         perror("server: read fdss_s_t[0]");
         writeLog("==> ERROR ==> server:read fdss_s_t[0], %m ");
         exit(EXIT_FAILURE);
+    }else{
+        writeLog("///SERVER: controllo byte LETTI target: %d", retVal_read);
+        printf("///SERVER: controllo byte LETTI target: %d", retVal_read);
     }
+    
     // moltiply the target for the reference system. I use the same reference system of the drone
     // The obstacle are between -1 and 1
     for (i = 0; i < MAX_TARG_ARR_SIZE; i++)
@@ -559,7 +563,7 @@ int main(int argc, char *argv[])
     closeAndLog(fdi_s[0], "server: close fdi_s[0]");
     closeAndLog(fdss_s_o[0], "server: close fdss_s_o[0]");
     closeAndLog(fdd_s[0], "server: close fdd_s[0]");
-    
+
     return 0;
 }
 

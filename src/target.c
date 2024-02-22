@@ -106,6 +106,8 @@ int main(int argc, char *argv[])
         perror("obstacle: error write fdt_s[1]");
         writeLog("==> ERROR ==> obstacle: write fdt_s[1], %m ");
         exit(EXIT_FAILURE); // Esce in caso di errore
+    }else{
+        writeLog("/// TARGHET: controllo byte scritti: %d", retVal_write);
     }
 
     while (1)
