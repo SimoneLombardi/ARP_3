@@ -14,12 +14,17 @@
 #include <sys/wait.h>
 #include <stdarg.h>
 #include <ncurses.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
 #include "arplib.h"
 #include "../config/config.h"
 
 void print_screen(char *txt_path, int txt_row, int txt_col, char *buffer);
 WINDOW *create_new_window(int row, int col, int ystart, int xstart);
 void destroy_win(WINDOW *local_win);
+
+int string_parser(char *string, char *first_arg, char *second_arg);
+int input_validation(int ret_val, char *first_arg, char *second_arg);
 
 
 int main(int argc, char *argv[]){
@@ -52,6 +57,8 @@ int main(int argc, char *argv[]){
     writeLog("RULE PRINT value of INFO pipe are: %d, %d ", info_pipe[0], info_pipe[1]);
 
     char socket_info[100];
+    char first_arg[100], second_arg[100];
+    int ret_val;
 
     int Srow, Scol;
 
@@ -65,7 +72,16 @@ int main(int argc, char *argv[]){
     refresh();
 
     // print the rules and wait to start the game
-    print_screen("../config/rule.txt", 23, 78, socket_info);
+    do{
+        print_screen("../config/rule.txt", 23, 78, socket_info);
+
+        ret_val = string_parser(socket_info, first_arg, second_arg);
+
+        clear();
+        refresh();
+    }while(input_validation(ret_val, first_arg, second_arg) == 0);
+
+
 
     endwin();
 
@@ -80,6 +96,59 @@ int main(int argc, char *argv[]){
     close(info_pipe[1]);
 
     return 0;
+}
+
+int string_parser(char *string, char *first_arg, char *second_arg){
+    // define the char that separate the arguments in the string
+    char *separator = " ";
+    char *arg;
+    int ret_val;
+
+    arg = strtok(string, separator);
+    strcpy(first_arg, arg);
+
+    arg = strtok(NULL, separator);
+    if(arg == NULL){
+        ret_val = 0;
+    }else{  
+        ret_val = 1;
+        strcpy(second_arg, arg);
+    }
+
+    return ret_val;
+}
+
+int input_validation(int ret_val, char *first_arg, char *second_arg){
+    int temp, ctrl;
+    if(ret_val == 0){
+        if(strcmp(first_arg, "singleplayer") == 0){
+            return 1;
+        }else{
+            temp = atoi(first_arg);
+            if(temp >= 49152 && temp <= 65535){
+                return 1;
+            }else{
+                return 0;
+            }    
+        }
+    }else{
+        ctrl = 1;
+        temp = atoi(second_arg);
+        if(temp < 49152 || temp > 65535){
+            ctrl = 0;
+        }
+
+        struct sockaddr_in sa;
+        if((temp = inet_pton(AF_INET, first_arg, &(sa.sin_addr))) < 0){
+            ctrl = 0;
+        }
+
+        if(ctrl == 1){
+            return 1;
+        }else{
+            return 0;
+        }
+    }
 }
 
 void print_screen(char *txt_path, int txt_row, int txt_col, char *buffer)
