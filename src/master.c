@@ -63,7 +63,7 @@ int main()
     char str_fd1[2][20];
 
     create_pipe(fd1, str_fd1, "master: pipe fd1");
-    
+
     // Pipe for comommunication between input -> master
     int fd2[2];
     char str_fd2[2][20];
@@ -96,7 +96,7 @@ int main()
     // Pipe for communication between master -> soket server
     int fd7[2];
     char str_fd7[2][20];
-    create_pipe(fd7, str_fd7,"master: pipe fd7");
+    create_pipe(fd7, str_fd7, "master: pipe fd7");
 
     // write in log for debug
     writeLog("MASTER send to server -------- fd1 file desc: %d, %d ", fd1[0], fd1[1]);
@@ -161,14 +161,32 @@ int main()
 
     create_pipe(rule_pipe, str_rule_pipe, "master: pipe rule_pipe");
 
+    int fdrp_ss[2];
+    char str_fdrp_ss[2][20];
+
+    create_pipe(fdrp_ss, str_fdrp_ss, "master: pipe str_fdrp_ss");
+
     // write log for debug
-    writeLog("MASTER to server           fdi_s:     %d,%d  fdd_s: %d,%d fds_d: %d,%d  fdss_s_t: %d,%d fdss_s_o: %d,%d  fds_ss: %d,%d", fdi_s[0], fdi_s[1], fdd_s[0], fdd_s[1], fds_d[0], fds_d[1], fdss_s_t[0], fdss_s_t[1], fdss_s_o[0], fdss_s_o[1], fds_ss[0], fds_ss[1]);
-    writeLog("MASTER to socket server    fdt_s:     %d,%d  fdo_s: %d,%d               fdss_s_t: %d,%d fdss_s_o: %d,%d  fds_ss: %d,%d", fdt_s[0], fdt_s[1], fdo_s[0], fdo_s[1], fdss_s_t[0], fdss_s_t[1], fdss_s_o[0], fdss_s_o[1], fds_ss[0], fds_ss[1]);
+    writeLog("MASTER to server           fdi_s:     %d,%d   fdd_s: %d,%d fds_d: %d,%d    fdss_s_t: %d,%d fdss_s_o: %d,%d  fds_ss: %d,%d", fdi_s[0], fdi_s[1], fdd_s[0], fdd_s[1], fds_d[0], fds_d[1], fdss_s_t[0], fdss_s_t[1], fdss_s_o[0], fdss_s_o[1], fds_ss[0], fds_ss[1]);
+    writeLog("MASTER to socket server    fdt_s:     %d,%d   fdo_s: %d,%d fdrp_ss: %d,%d  fdss_s_t: %d,%d fdss_s_o: %d,%d  fds_ss: %d,%d", fdt_s[0], fdt_s[1], fdo_s[0], fdo_s[1], fdrp_ss[0], fdrp_ss[1], fdss_s_t[0], fdss_s_t[1], fdss_s_o[0], fdss_s_o[1], fds_ss[0], fds_ss[1]);
     writeLog("MASTER to input            fdi_s:     %d,%d", fdi_s[0], fdi_s[1]);
-    writeLog("MASTER to drone            fdd_s:     %d,%d  fds_d: %d,%d  ", fdd_s[0], fdd_s[1], fds_d[0], fds_d[1]);
+    writeLog("MASTER to drone            fdd_s:     %d,%d   fds_d: %d,%d  ", fdd_s[0], fdd_s[1], fds_d[0], fds_d[1]);
     writeLog("MASTER to target           fdt_s:     %d,%d", fdt_s[0], fdt_s[1]);
     writeLog("MASTER to obstacle         fdo_s:     %d,%d", fdo_s[0], fdo_s[1]);
-    writeLog("MASTER to rule             rule_pipe: %d,%d", rule_pipe[0], rule_pipe[1]);
+    writeLog("MASTER to rule             rule_pipe: %d,%d,  fdrp_ss: %d,%d", rule_pipe[0], rule_pipe[1], fdrp_ss[0], fdrp_ss[1]);
+
+    //--- SOCKET SERVER process -------------------------------------------------------------------------------------------------
+    // char *arg_list_socket_server_1[] = {"konsole", "-e", "./socket_server", first_arg, str_fd7[0], str_fd7[1], str_fdt_s[0], str_fdt_s[1], str_fdo_s[0], str_fdo_s[1], str_fdss_s_t[0], str_fdss_s_t[1], str_fdss_s_o[0], str_fdss_s_o[1], str_fds_ss[0], str_fds_ss[1], NULL};
+    char *arg_list_socket_server[] = {"konsole", "-e", "./socket_server", str_fd7[0], str_fd7[1], str_fdt_s[0], str_fdt_s[1], str_fdo_s[0], str_fdo_s[1], str_fdss_s_t[0], str_fdss_s_t[1], str_fdss_s_o[0], str_fdss_s_o[1], str_fds_ss[0], str_fds_ss[1], str_fdrp_ss[0], str_fdrp_ss[1], NULL};
+
+    child_pids[5] = spawn("konsole", arg_list_socket_server);
+    // printf("first_arg: %s\n\n\n", first_arg);
+
+    writeLog("MASTER spawn socket server with pid: %d ", child_pids[5]);
+
+    // recive the correct pid from socket server
+    recive_correct_pid(fd7, &child_pids_received[5]);
+    writeLog("MASTER RECIVED socket server real pid: %d ", child_pids_received[5]);
 
     // --- Rule printing -------------------------------------------------------------------------------------------------
     // variabili per recupero informazioni
@@ -176,7 +194,7 @@ int main()
     char read_buffer[256];
 
     int rule_pid, real_rule_pid;
-    char *arg_list_rule_print[] = {"konsole", "-e", "./rule_print", str_fd6[0], str_fd6[1], str_rule_pipe[0], str_rule_pipe[1], NULL};
+    char *arg_list_rule_print[] = {"konsole", "-e", "./rule_print", str_fd6[0], str_fd6[1], str_rule_pipe[0], str_rule_pipe[1], str_fdrp_ss[0], str_fdrp_ss[1], NULL};
 
     // create process and launch rule_print
     rule_pid = spawn("konsole", arg_list_rule_print);
@@ -199,27 +217,6 @@ int main()
     int ret_val;
 
     ret_val = string_parser(read_buffer, first_arg, second_arg);
-
-    char *arg_list_socket_server_1[] = {"konsole", "-e", "./socket_server", first_arg, str_fd7[0], str_fd7[1], str_fdt_s[0], str_fdt_s[1], str_fdo_s[0], str_fdo_s[1], str_fdss_s_t[0], str_fdss_s_t[1], str_fdss_s_o[0], str_fdss_s_o[1], str_fds_ss[0], str_fds_ss[1], NULL};
-    char *arg_list_socket_server_2[] = {"konsole", "-e", "./socket_server", first_arg, second_arg, str_fd7[0], str_fd7[1], str_fdt_s[0], str_fdt_s[1], str_fdo_s[0], str_fdo_s[1], str_fdss_s_t[0], str_fdss_s_t[1], str_fdss_s_o[0], str_fdss_s_o[1], str_fds_ss[0], str_fds_ss[1], NULL};
-
-    //--- SOCKET SERVER process -------------------------------------------------------------------------------------------------
-    if (ret_val == 0)
-    {
-        child_pids[5] = spawn("konsole", arg_list_socket_server_1);
-        // printf("first_arg: %s\n\n\n", first_arg);
-    }
-    else
-    {
-        child_pids[5] = spawn("konsole", arg_list_socket_server_2);
-        // printf("first_arg: %s  second_arg: %s\n\n\n", first_arg, second_arg);
-    }
-
-    writeLog("MASTER spawn socket server with pid: %d ", child_pids[5]);
-
-    // recive the correct pid from socket server
-    recive_correct_pid(fd7, &child_pids_received[5]);
-    writeLog("MASTER RECIVED socket server real pid: %d ", child_pids_received[5]);
 
     // --- GAME SERVER process ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     // Server process is execute with konsole so, the child_pid(correspond to the pid of the kosole) and the child_pid_received( correspod to the pid of process)
