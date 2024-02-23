@@ -18,8 +18,14 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <netdb.h>
 #include "arplib.h"
 #include "../config/config.h"
+
+#define h_addr h_addr_list[0] /* for backward compatibility */
+// the variable h_addr is the first address in the list h_addr_list
+
+void client_handling_function(int pipe_fd, int socket_fd, int port_no, char *ip_address);
 
 void pipe_fd_init(int fd_array[][2], char *argv[], int indx_offset)
 {
@@ -246,21 +252,21 @@ int main(int argc, char *argv[])
     else
     {
         // MULTIPLYER MODE
-        pid_t server_pid, client_pid;
+        pid_t targhet_client_pid, obstacle_client_pid;
 
-        if ((server_pid = fork()) < 0)
+        if ((targhet_client_pid = fork()) < 0)
         {
-            error("socket server: fork server_pid");
+            error("socket server: fork targhet_client_pid");
         }
 
-        if (server_pid != 0)
+        if (targhet_client_pid != 0)
         {
-            if ((client_pid = fork()) < 0)
+            if ((obstacle_client_pid = fork()) < 0)
             {
-                error("socket server: fork client_pid");
+                error("socket server: fork obstacle_client_pid");
             }
         }
-        if (server_pid == 0)
+        if (targhet_client_pid == 0)
         {
             // server child process
             while (1)
@@ -270,7 +276,7 @@ int main(int argc, char *argv[])
 
             }
         }
-        if (client_pid == 0)
+        if (obstacle_client_pid == 0)
         {
             // client child process
             while (1)
@@ -278,7 +284,93 @@ int main(int argc, char *argv[])
 
             }
         }
+
+        // parent process handles the SERVER side ---> solo se getpid() == father_pid
+        // variabili gestione socket
+        int sock_fd, newsock_fd, port_no, cli_len, ret_n;
+        char string_port_no[10];
+        char string_ip[INET_ADDRSTRLEN];
+
+        // socket struct
+        SAI serv_addr, cli_addr;
+
+        if((sock_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0){
+            error("socket_server: error opening socket");
+        }
+        // set the socket struct to zero
+        bzero((char *) &serv_addr, sizeof(serv_addr));
+
+        // set the port number
+        port_no = 49152;
+
+        // set the socket struct
+        serv_addr.sin_family = AF_INET;
+        serv_addr.sin_addr.s_addr = INADDR_ANY;
+        serv_addr.sin_port = htons(port_no);
+
+        // bind the tocket
+        while((ret_n = bind(sock_fd, (SA *) &serv_addr, sizeof(serv_addr))) < 0){
+            error("socket_server: error on binding");
+
+            port_no = port_no + 1;
+            serv_addr.sin_port = htons(port_no);
+        }
+        //set fd to listen
+        listen(sock_fd, 5);
+
+        // show the info for connection to screen
+
+
     }
 
     return 0;
+}
+
+void client_handling_function(int pipe_fd, int socket_fd, int port_no, char *ip_address){
+    // variabili gestione socket
+    int sock_fd, port_no;
+    int retR_n, retW_n, ret_n;
+
+    // pid of the process
+    int proc_dip = getpid(); // use the pid to recognise the client process
+    char error_msg[100]; // string for error message
+
+    // socket setruck
+    SAI server_addres;
+    HE *server;
+
+    if((sock_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0){
+        sprintf(error_msg, "ERROR opening socket -- %d", proc_dip);
+        error(error_msg);
+    }
+
+    if((server = gethostbyname(ip_address)) == NULL){
+        sprintf(error_msg, "ERROR, no such host -- %d", proc_dip);
+        error(error_msg);
+    }// recover the server ip address
+
+    // socket initialization
+    bzero((char *) &server_addres, sizeof(server_addres));
+    server_addres.sin_family = AF_INET;
+
+    bcopy((char *)server->h_addr, (char *)&server_addres.sin_addr.s_addr, server->h_length);
+    // used to copy server->h_lenght byte from string arg1 to string arg2
+
+    server_addres.sin_port = htons(port_no); 
+
+    // start communication with the server
+    if((ret_n = connect(sock_fd, (SA *) &server_addres, sizeof(server_addres))) < 0){
+        sprintf(error_msg, "ERROR connecting -- %d", proc_dip);
+        error(error_msg);
+    }
+    else{
+        sprintf(error_msg, "Connected to the server -- %d", proc_dip);
+        writeLog(error_msg);
+    }
+
+    // communication loop
+    while(1){
+    }
+
+
 }

@@ -39,6 +39,7 @@
 //----- def for socket_server -----//
 #define SAI struct sockaddr_in
 #define SA struct sockadd
+#define HE struct hostent
 #define MAX_MSG_LENGHT 1024
 
 
