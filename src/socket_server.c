@@ -157,9 +157,29 @@ int main(int argc, char *argv[])
     // set fd to listen
     listen(sock_fd, 5);
 
-    cli_len = sizeof(cli_addr);
+   
+    FILE* fp;
+    char buffer[256];
+    
+    fp = popen("ifconfig | grep -Eo 'inet (addr:)?([0-9]*\\.){3}[0-9]*' | awk '{print $2}'", "r");
+    
+    if (fp == NULL) {
+        perror("Errore nell'apertura del processo");
+        return EXIT_FAILURE;
+    }
 
-    printf("selected port no: %d\n", port_no);
+    printf("Gli indirizzi IPv4 trovati sono:\n");
+
+    while (fgets(buffer, sizeof(buffer), fp) != NULL) {
+        char ipv4_address[16];
+        strncpy(ipv4_address, buffer, 16);
+        ipv4_address[16 - 1] = '\0';  // Assicura che la stringa sia terminata correttamente
+        printf("%s\n", ipv4_address);
+    }
+
+    pclose(fp);
+
+    printf("selected port no: %d", port_no);
 
     printf("controllo\n");
 
