@@ -29,8 +29,6 @@ void destroy_win(WINDOW *local_win);
 
 int signum(int x);
 
-
-
 int main(int argc, char *argv[])
 {
     // variable usefull for the for cycle
@@ -47,10 +45,7 @@ int main(int argc, char *argv[])
 
     if (sigaction(SIGUSR1, &sa_usr1, NULL) == -1)
     {
-        perror("sigaction");
-        writeLog("ERROR ==> server: sigaction SIGUSR1 %m ");
-        exit(EXIT_FAILURE);
-        return -1;
+        error("server: sigaction");
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////
@@ -68,11 +63,9 @@ int main(int argc, char *argv[])
     // write the pid in the pipe
     if (write(fd1[1], &server_pid, sizeof(server_pid)) < 0)
     {
-        perror("server: write fd1[1],");
-        writeLog("ERROR ==> server, write fd1[1] %m ");
-        exit(EXIT_FAILURE);
+        error("server: write fd1[1]");
     }
-    closeAndLog(fd1[1], "server: close fd1[1]");  
+    closeAndLog(fd1[1], "server: close fd1[1]");
 
     //// Take the fdi_s for comunication input-server, fdi_s are in positions 3, 4
     int fdi_s[2];
@@ -108,7 +101,7 @@ int main(int argc, char *argv[])
     }
     // close the write file descriptor fdss_s_t[1], server only read from target
     closeAndLog(fdss_s_t[1], "server: close fdss_s_t[1]");
-   
+
     //// Take the fdss_s_o for comunication between obstacle-server, position 9, 10
     int fdss_s_o[2];
     for (i = 11; i < 13; i++)
@@ -117,7 +110,7 @@ int main(int argc, char *argv[])
     }
     // close the write file descriptor fdss_s_o[1], server only read from object
     closeAndLog(fdss_s_o[1], "server: close fdss_s_o[1]");
-  
+
     // Take the fds_ss for comunication between server -> socket_server, are in positions 13, 14
     int fds_ss[2];
     for (i = 13; i < 15; i++)
@@ -126,7 +119,6 @@ int main(int argc, char *argv[])
     }
     // close the read file descriptor fds_ss[0, server only write from socket_server
     closeAndLog(fds_ss[0], "server: close fds_ss[0]");
-
 
     writeLog("SERVER value of fd1 are:      %d %d ", fd1[0], fd1[1]);
     writeLog("SERVER value of fdi_s are:    %d %d ", fdi_s[0], fdi_s[1]);
@@ -215,9 +207,7 @@ int main(int argc, char *argv[])
     ///////////////////// write to socket server /////////////////////////////////////////////////////////////
     if (write(fds_ss[1], window_size, sizeof(int) * 2) == -1)
     {
-        perror("server: write fds_ss[1]");
-        writeLog("==> ERROR ==> server: write fds_ss[1], %m ");
-        exit(EXIT_FAILURE);
+        error("server: write fd1[1]");
     }
 
     rowSH = spawn_Row / 2; // definisco gli shift per traslare (0,0) al centro dello schermo
@@ -231,14 +221,14 @@ int main(int argc, char *argv[])
     // read the set of target (blocking read)
     if ((retVal_read = read(fdss_s_t[0], set_of_target, sizeof(double) * MAX_TARG_ARR_SIZE * 2)) == -1)
     {
-        perror("server: read fdss_s_t[0]");
-        writeLog("==> ERROR ==> server:read fdss_s_t[0], %m ");
-        exit(EXIT_FAILURE);
-    }else{
+        error("server: read fdss_s_t[0]");
+    }
+    else
+    {
         writeLog("///SERVER: controllo byte LETTI target: %d", retVal_read);
         printf("///SERVER: controllo byte LETTI target: %d", retVal_read);
     }
-    
+
     // moltiply the target for the reference system. I use the same reference system of the drone
     // The obstacle are between -1 and 1
     for (i = 0; i < MAX_TARG_ARR_SIZE; i++)
@@ -276,9 +266,7 @@ int main(int argc, char *argv[])
         // select for check the value
         if (retVal_sel == -1)
         {
-            perror("server: error select: ");
-            writeLog("==> ERROR ==> server: select %m ");
-            exit(EXIT_FAILURE);
+            error("server: error select: ");
         }
         else if (retVal_sel > 0)
         // case there is some data in the observed file descriptor
@@ -299,9 +287,7 @@ int main(int argc, char *argv[])
                         } while (retVal_read == -1 && errno == EINTR);
                         if (retVal_read == -1)
                         {
-                            perror("server: read fdd_s[0]");
-                            writeLog("==> ERROR ==> server:read fdd_s[0], %m ");
-                            exit(EXIT_FAILURE);
+                            error("server: read fdd_s[0]");
                         }
                         else
                         {
@@ -321,9 +307,7 @@ int main(int argc, char *argv[])
                         } while (retVal_read == -1 && errno == EINTR);
                         if (retVal_read == -1)
                         {
-                            perror("server: read fdss_s_o[0]");
-                            writeLog("==> ERROR ==> server:read fdss_s_o[0], %m ");
-                            exit(EXIT_FAILURE);
+                            error("server: read fdss_s_o[0]");
                         }
                         else
                         {
@@ -345,9 +329,7 @@ int main(int argc, char *argv[])
                         } while (retVal_read == -1 && errno == EINTR);
                         if (retVal_read == -1)
                         {
-                            perror("server: read fdi_s[0]");
-                            writeLog("==> ERROR ==> server:read fdi_s[0], %m ");
-                            exit(EXIT_FAILURE);
+                            error("server: read fdi_s[0]");
                         }
                     }
                     else
@@ -458,9 +440,7 @@ int main(int argc, char *argv[])
             } while (result == -1 && errno == EINTR);
             if (write(fds_d[1], totalForce, sizeof(double) * 2) == -1)
             {
-                perror("server: write fds_d[1]");
-                writeLog("==> ERROR ==> server: write fds_d[1], %m ");
-                exit(EXIT_FAILURE);
+                error("server: write fds_d[1]");
             }
         }
         //////////////////////////////////////////////////////////////////////////
@@ -518,7 +498,7 @@ int main(int argc, char *argv[])
                 // after closing win screen, the server will be closed
             }
         }
-        // gestione del resize della finestra
+        // resize ncurses window
         getmaxyx(stdscr, Srow_new, Scol_new);
         if (Srow_new != Srow || Scol_new != Scol)
         {
@@ -577,9 +557,7 @@ void sigusr1Handler(int signum, siginfo_t *info, void *context)
         // send a signal SIGUSR2 to watchdog
         if (kill(info->si_pid, SIGUSR2) == -1)
         {
-            perror("server: kill SIGUSR2");
-            writeLog("==> ERROR ==> serevr: kill SIGUSR2");
-            exit(EXIT_FAILURE);
+            error("server: kill SIGUSR2");
         }
         writeLog("SERVER, pid %d, received signal from wd pid: %d ", getpid(), info->si_pid);
     }

@@ -46,8 +46,7 @@ int main(int argc, char *argv[])
     sa_usr2.sa_flags = SA_SIGINFO; // I need also the info foruse the pid of the process for unde
     if (sigaction(SIGUSR2, &sa_usr2, NULL) == -1)
     {
-        perror("wd: sigaction");
-        writeLog("==> ERROR ==> wd: sigaction %m ");
+        error("wd: sigaction");
     }
     // exctract and convert the pid send from master, they are in position 1 => nm_ps +1
     for (i = 1; i < num_ps + 1; i++)
@@ -79,7 +78,7 @@ int main(int argc, char *argv[])
             /* send signal to all process*/
             if (kill(pids_from_process[i], SIGUSR1) != 0)
             {
-                writeLog("==> ERROR ==> wd: kill signal SIGUSR1 wd %m ");
+                error("wd: kill signal SIGUSR1");
             }
             /* increment the counter when send the signal SIGUSR1*/
             counter++;

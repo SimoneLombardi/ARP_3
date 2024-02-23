@@ -35,9 +35,7 @@ int main(int argc, char *argv[])
 
     if (sigaction(SIGUSR1, &sa_usr1, NULL) == -1)
     {
-        perror("obstacle: sigaction");
-        writeLog("==> ERROR ==> obstacle: sigaction %m ");
-        exit(EXIT_FAILURE);
+        error("obstacle: sigaction");
     }
 
     //// -- manage pipe ----------------------------------------------------------
@@ -47,46 +45,26 @@ int main(int argc, char *argv[])
     {
         fd5[i - 1] = atoi(argv[i]);
     }
-    writeLog("OBSTACLE value of fd5 are: %d %d ", fd5[0], fd5[1]);
-
     // close the read file descriptor fd1[0]
-    if (close(fd5[0]) < 0)
-    {
-        perror("obstacle: close fd5[1]");
-        writeLog("==> ERROR ==> obstacle: close fd5[0], %m ");
-        exit(EXIT_FAILURE);
-    }
+    closeAndLog(fd5[0], "obstacle: close fd5[0]");
     // write the pid in the pipe
     if (write(fd5[1], &obstacle_pid, sizeof(obstacle_pid)) < 0)
     {
-        perror("obstacle: write fd5[1],");
-        writeLog("==> ERROR ==> obstacle, write fd5[1] %m ");
-        exit(EXIT_FAILURE);
+        error("obstacle: write fd5[1]");
     }
-    if (close(fd5[1]) < 0)
-    {
-        perror("obstacle: close fd5[1]");
-        writeLog("==> ERROR ==> obstacle: close fd5[1], %m ");
-        exit(EXIT_FAILURE);
-    }
-
-    //// pipe for communication between obstacle -> server, are in positions 3, 4 of argv[]
-    printf("print in screen the value of argv 3 and 4: %s, %s ", argv[3], argv[4]);
+    closeAndLog(fd5[1], "obstacle: close fd5[1]");
 
     int fdo_s[2];
     for (i = 3; i < 5; i++)
     {
         fdo_s[i - 3] = atoi(argv[i]);
     }
-    writeLog("OBSTACLE value of fdo_s are: %d %d ", fdo_s[0], fdo_s[1]);
-
     // close the read file descriptor
-    if (close(fdo_s[0]) == -1)
-    {
-        perror("obstacle: close fdo_s[0] ");
-        writeLog("==> ERROR ==> obstacle: close fdo_s[0], %m ");
-        exit(EXIT_FAILURE);
-    }
+    closeAndLog(fdo_s[0], "obstacle: close fdo_s[0] ");
+
+    // print all the file descriptor received on logfile
+    writeLog("OBSTACLE value of fd5 are: %d %d ", fd5[0], fd5[1]);
+    writeLog("OBSTACLE value of fdo_s are: %d %d ", fdo_s[0], fdo_s[1]);
 
     // initialize the time on random generator
     time_t t = 0;
@@ -110,14 +88,14 @@ int main(int argc, char *argv[])
         do
         {
             retVal_write = write(fdo_s[1], set_of_obstacle, sizeof(double) * MAX_OBST_ARR_SIZE * 2);
-        }while(retVal_write == -1 && errno == EINTR);
+        } while (retVal_write == -1 && errno == EINTR);
         // general write error
-        if ( retVal_write < 0)
+        if (retVal_write < 0)
         {
-            perror("obstacle: error write fdo_s[1]");
-            writeLog("==> ERROR ==> obstacle: write fdo_s[1], %m ");
-            exit(EXIT_FAILURE);
-        }else{
+            error("obstacle: error write fdo_s[1]");
+        }
+        else
+        {
             writeLog("/// OBSTACLE: controllo byte scritti: %d", retVal_write);
         }
         // generate obstacle every N seconds; implement a non-blocking timer to avoid problems with signals
@@ -129,19 +107,12 @@ int main(int argc, char *argv[])
     }
 
     // close the write file descriptor fdo_s
-    if (close(fdo_s[1]) == -1)
-    {
-        perror("obstacle: close fdo_s[1] ");
-        writeLog("==> ERROR ==> obstacle: close fdo_s[1], %m ");
-        exit(EXIT_FAILURE);
-    }
-
+    closeAndLog(fdo_s[1], "obstacle: close fdo_s[1]");
     exit(EXIT_SUCCESS); // Not reached, but included for completeness
 }
 
 //// --- Function section -------------------------------------------------------------
 
-// Insert perror in the kill
 void sigusr1Handler(int signum, siginfo_t *info, void *context)
 {
     if (signum == SIGUSR1)
@@ -153,9 +124,7 @@ void sigusr1Handler(int signum, siginfo_t *info, void *context)
         }
         else
         {
-            perror("obstacle: kill SIGUSR2 ");
-            writeLog("==> ERROR ==> obstacle: kill SIGUSR2 %m ");
-            exit(EXIT_FAILURE);
+            error("obstacle: kill SIGUSR2 ");
         }
     }
 }

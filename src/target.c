@@ -35,9 +35,7 @@ int main(int argc, char *argv[])
 
     if (sigaction(SIGUSR1, &sa_usr1, NULL) == -1)
     {
-        perror("target: sigaction");
-        writeLog("==> ERROR ==> target: sigaction input %m ");
-        exit(EXIT_FAILURE); // Esce in caso di errore
+        error("target: sigaction");
     }
 
     // Take the fd for comunicating with master, it's position is 1,2 in argv[]
@@ -46,44 +44,28 @@ int main(int argc, char *argv[])
     {
         fd4[i - 1] = atoi(argv[i]);
     }
-    writeLog("TARGET value of fd4 are: %d %d ", fd4[0], fd4[1]);
+    // close the read fiel descriptor fd4[0]
+    closeAndLog(fd4[0], "target: close fd4[0]");
 
-    // close the read fiel descriptor fd1[0]
-    if (close(fd4[0]) < 0)
-    {
-        perror("target: close fd4[0]");
-        writeLog("==> ERROR ==> target: close fd4[0], %m ");
-        exit(EXIT_FAILURE); // Esce in caso di errore
-    }
-    // write the pid in the pipe
+    // write the pid in the pipe, sended to master
     if (write(fd4[1], &target_pid, sizeof(target_pid)) < 0)
     {
-        perror("target: write fd4[1],");
-        writeLog("==> ERROR ==> target, write fd4[1] %m ");
-        exit(EXIT_FAILURE); // Esce in caso di errore
+        error("target: write fd4[1]");
     }
-    if (close(fd4[1]) < 0)
-    {
-        perror("target: close fd4[1]");
-        writeLog("==> ERROR ==> target: close fd4[1], %m ");
-        exit(EXIT_FAILURE); // Esce in caso di errore
-    }
+    closeAndLog(fd4[1], "target: close fd4[1]");
 
-    //// pipe for communication between target->server, are in position 3, 4
+    //// pipe for communication between target->server, are in position 3, 4, only write target
     int fdt_s[2];
     for (i = 3; i < 5; i++)
     {
         fdt_s[i - 3] = atoi(argv[i]);
     }
-    writeLog("TARGET value of fdt_s are: %d %d ", fdt_s[0], fdt_s[1]);
-
     // close the read file descriptor, target only write data in the pipe
-    if (close(fdt_s[0]) == -1)
-    {
-        perror("target: close fdt_s[0] ");
-        writeLog("==> ERROR ==> target: close fdt_s[0], %m ");
-        exit(EXIT_FAILURE); // Esce in caso di errore
-    }
+    closeAndLog(fdt_s[0], "target: close fdt_s[0] ");
+
+    // print all the file descriptor received
+    writeLog("TARGET value of fd4 are: %d %d ", fd4[0], fd4[1]);
+    writeLog("TARGET value of fdt_s are: %d %d ", fdt_s[0], fdt_s[1]);
 
     double set_of_target[MAX_TARG_ARR_SIZE][2];
     for (int i = 0; i < MAX_TARG_ARR_SIZE; i++)
@@ -99,14 +81,14 @@ int main(int argc, char *argv[])
     do
     {
         retVal_write = write(fdt_s[1], set_of_target, sizeof(double) * MAX_TARG_ARR_SIZE * 2);
-    }while(retVal_write == -1 && errno == EINTR);
+    } while (retVal_write == -1 && errno == EINTR);
     // check for general errors
     if (retVal_write < 0)
     {
-        perror("obstacle: error write fdt_s[1]");
-        writeLog("==> ERROR ==> obstacle: write fdt_s[1], %m ");
-        exit(EXIT_FAILURE); // Esce in caso di errore
-    }else{
+        error("obstacle: error write fdt_s[1]");
+    }
+    else
+    {
         writeLog("/// TARGHET: controllo byte scritti: %d", retVal_write);
     }
 
@@ -116,14 +98,9 @@ int main(int argc, char *argv[])
     }
 
     // close the write file descriptor, target only write data in the pipe
-    if (close(fdt_s[1]) == -1)
-    {
-        perror("target: close fdt_s[1] ");
-        writeLog("==> ERROR ==> target: close fdt_s[1], %m ");
-        exit(EXIT_FAILURE); // Esce in caso di errore
-    }
+    closeAndLog(fdt_s[1], "target: close fdt_s[1] ");
 
-    return 0; // Aggiunto il ritorno 0 alla fine della funzione main
+    return 0; 
 }
 
 ////---- Functions section -----------------------------------------------------------
@@ -142,9 +119,7 @@ void sigusr1Handler(int signum, siginfo_t *info, void *context)
         }
         else
         {
-            perror("target: kill SIGUSR2 ");
-            writeLog("==> ERROR ==> target: kill SIGUSR2 %m");
-            exit(EXIT_FAILURE); // Esce in caso di errore
+            error("target: kill SIGUSR2 ");
         }
     }
 }

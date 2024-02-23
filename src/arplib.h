@@ -11,7 +11,7 @@ void writeLog(const char *format, ...);
 
 int sign(int x);
 
-void create_pipe(int pipe_fd[], char string_pipe_fd[][20]);
+void create_pipe(int pipe_fd[], char string_pipe_fd[][20], char *descriptorName);
 
 void recive_correct_pid(int pipe_fd[2], int *pid_address);
 

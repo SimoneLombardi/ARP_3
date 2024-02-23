@@ -9,6 +9,7 @@
 #include <ncurses.h>
 #include <sys/types.h>
 
+// Function for spawn process
 int spawn(const char *program, char **arg_list)
 {
     pid_t child_pid = fork();
@@ -20,24 +21,20 @@ int spawn(const char *program, char **arg_list)
         // child process
         if (execvp(program, arg_list) == -1)
         {
-            perror("master: exec ");
-            writeLog("==> ERROR ==> exec failed, %m ");
-            exit(EXIT_FAILURE);
-            return -1;
+            error("master: exec ");
         }
     }
     return 1;
 }
 
-/* function for write in logfile*/
-
-
-void writeLog(const char *format, ...) {
+// function for write in logfile
+void writeLog(const char *format, ...)
+{
     // Open the log file for appending
     FILE *logfile = fopen("../log/logfile.txt", "a");
-    if (logfile == NULL) {
-        perror("server: error opening logfile");
-        exit(EXIT_FAILURE);
+    if (logfile == NULL)
+    {
+        error("error opening logfile");
     }
 
     // Initialize the variable argument list
@@ -69,13 +66,12 @@ void writeLog(const char *format, ...) {
     fflush(logfile);
 
     // Close the log file, handle errors if closing fails
-    if (fclose(logfile) == -1) {
-        perror("fclose logfile");
-        // Log an error message if closing the file fails
-        writeLog("ERROR ==> server: fclose logfile");
+    if (fclose(logfile) == -1)
+    {
+        error("fclose logfile");
+        
     }
 }
-
 
 // return sign of arg X
 int sign(int x)
@@ -88,45 +84,50 @@ int sign(int x)
         return 1;
 }
 
-// create a pipe and convert the value to string for send the fd
-void create_pipe(int pipe_fd[], char string_pipe_fd[][20]){
+// create a pipe and convert the value to string for send the fd, used only on master process
+void create_pipe(int pipe_fd[], char string_pipe_fd[][20], char *descriptorName)
+{
     // create the pipe
     if ((pipe(pipe_fd)) < 0)
     {
-        perror("master: pipe fd1");
-        writeLog("==> ERROR ==> master: build pipe fd1, %m ");
+        error(descriptorName);
     }
     // convert fd pipe in str
     for (int i = 0; i < 2; i++)
     {
         sprintf(string_pipe_fd[i], "%d", pipe_fd[i]);
+
     }
 }
 
 // close file descriptor and write on logfile
-void closeAndLog(int fd, const char *descriptorName) {
-    if (close(fd) < 0) {
+void closeAndLog(int fd, const char *descriptorName)
+{
+    if (close(fd) < 0)
+    {
         perror(descriptorName);
         // Assuming writeLog is a function for logging errors
-        writeLog("ERROR ==> %s, %m", descriptorName);
+        writeLog("==> ERROR ==> %s, %m", descriptorName);
         exit(EXIT_FAILURE);
     }
 }
 
-// function for check the error
-void error(char *descriptorName){
+// function for print the error
+void error(char *descriptorName)
+{
     perror(descriptorName);
     // Assuming writeLog is a function for logging errors
-    writeLog("ERROR ==> %s, %m", descriptorName);
-    exit(EXIT_FAILURE);    
+    writeLog("==> ERROR ==> %s, %m", descriptorName);
+    exit(EXIT_FAILURE);
 }
 
 // save the real pid of the process
 // ARGS: 1) pipe array fd, 2) address of the variable to save the pid ex: &child_pids_received[i]
-void recive_correct_pid(int pipe_fd[2], int *pid_address){
+void recive_correct_pid(int pipe_fd[2], int *pid_address)
+{
     // close the write file descriptor
     if (close(pipe_fd[1]) == -1)
-    {   
+    {
         perror("master: close RD");
         writeLog("==> ERROR ==> master: close pipe RD, %m ");
     }
@@ -142,6 +143,3 @@ void recive_correct_pid(int pipe_fd[2], int *pid_address){
         writeLog("==> ERROR ==> master: close pipe WR, %m ");
     }
 }
-
-
-

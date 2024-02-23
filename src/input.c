@@ -54,8 +54,7 @@ int main(int argc, char *argv[])
 
     if (sigaction(SIGUSR1, &sa_usr1, NULL) == -1)
     {
-        perror("input: sigaction");
-        writeLog("==> ERROR ==> input: sigaction input %m ");
+        error("input: sigaction");
     }
 
     ////---- Manage pipe ----------------------------------------------------------
@@ -70,23 +69,15 @@ int main(int argc, char *argv[])
 
     // input need to write the pid inside the pipe
     // close the read file descriptor fd2[0]
-    if (close(fd2[0]) < 0)
-    {
-        perror("input: close fd2[0] ");
-        writeLog("==> ERROR ==> input: close fd2[0] %m ");
-    }
+    closeAndLog(fd2[0], "input: close fd2[0] ");
+
     // write the pid inside the pipe
     if (write(fd2[1], &input_pid, sizeof(input_pid)) < 0)
     {
-        perror("write fd2[1] input");
-        writeLog("==> ERROR ==> input: write fd2[1] %m ");
+        error("write fd2[1] input");
     }
     // close the write file descriptor fd2[1]
-    if (close(fd2[1]) < 0)
-    {
-        perror("close fd2[1] input");
-        writeLog("==> ERROR ==> input: close fd2[1] %m ");
-    }
+    closeAndLog(fd2[1], "input: close fd2[1] ");
 
     /// Take pipe fdi_s for comunication between input->server, they are in position 3, 4
     int fdi_s[2];
@@ -95,11 +86,7 @@ int main(int argc, char *argv[])
         fdi_s[i - 3] = atoi(argv[i]);
     }
     // close the read file descriptor fdi_s[0], input only write in the pipe
-    if (close(fdi_s[0]) < 0)
-    {
-        perror("input: close fdi_s[0]");
-        writeLog("==> ERROR ==> input: close fdi_s[0], %m ");
-    }
+    closeAndLog(fdi_s[0], "input: close fdi_s[0] ");
 
     ////---- Manage pipe end --------------------------------------------------------
 
@@ -175,8 +162,7 @@ int main(int argc, char *argv[])
             // sending force data to the server process, trogh the pipe fdi_s[1]
             if (write(fdi_s[1], resulting_power, sizeof(double) * 2) < 0)
             {
-                perror("input: write fdi_s[1] ");
-                writeLog("==> ERROR ==> input: write fdi_s[1] %m ");
+                error("input: write fdi_s[1] ");
             }
             resulting_power_old[0] = resulting_power[0];
             resulting_power_old[1] = resulting_power[1];
@@ -207,11 +193,7 @@ int main(int argc, char *argv[])
     // termination row
     endwin();
     // close the write file descriptor
-    if (close(fdi_s[1]) < 0)
-    {
-        perror("input: close fdi_s[1] ");
-        writeLog("ERROR ==> input: close fdi_s[1]  %m ");
-    }
+    closeAndLog(fdi_s[1], "input: close fdi_s[1] ");
 
     return 0;
 }

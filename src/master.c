@@ -18,7 +18,6 @@
 
 int string_parser(char *string, char *first_arg, char *second_arg);
 
-
 int main()
 {
     /* The master spawn all the process  in oreder server, input, drone, target, obstacle, with watchdog at the end
@@ -43,8 +42,7 @@ int main()
     FILE *logfile = fopen("../log/logfile.txt", "w");
     if (logfile < 0)
     { // if problem opening file, send error
-        perror("master: fopen logfile");
-        return 2;
+        error("master: fopen logfile");
     }
     else
     {
@@ -55,7 +53,7 @@ int main()
         fprintf(logfile, "=> create MASTER with pid %d: %s ", getpid(), ctime(&current_time));
         if (fclose(logfile) < 0)
         {
-            perror("master: fclose logfile");
+            error("master: fclose logfile");
         }
     }
 
@@ -63,43 +61,42 @@ int main()
     // Pipe for comommunication between server -> master for send back the pid
     int fd1[2];
     char str_fd1[2][20];
-    
-    create_pipe(fd1, str_fd1);
 
+    create_pipe(fd1, str_fd1, "master: pipe fd1");
+    
     // Pipe for comommunication between input -> master
     int fd2[2];
     char str_fd2[2][20];
-    
-    create_pipe(fd2, str_fd2);
+
+    create_pipe(fd2, str_fd2, "master: pipe fd2");
 
     // Pipe for comommunication between drone -> master
     int fd3[2];
     char str_fd3[2][20];
-    
-    create_pipe(fd3, str_fd3);
+
+    create_pipe(fd3, str_fd3, "master: pipe fd3");
 
     // Pipe for comommunication between target -> master
     int fd4[2];
     char str_fd4[2][20];
-    
-    create_pipe(fd4, str_fd4);
+
+    create_pipe(fd4, str_fd4, "master: pipe fd4");
 
     // Pipe for communication between obstacle -> master
     int fd5[2];
     char str_fd5[2][20];
-    
-    create_pipe(fd5, str_fd5);
+
+    create_pipe(fd5, str_fd5, "master: pipe fd5");
 
     // Pipe for communication between master -> rule_print
     int fd6[2];
     char str_fd6[2][20];
-    create_pipe(fd6, str_fd6);
+    create_pipe(fd6, str_fd6, "master: pipe fd6");
 
     // Pipe for communication between master -> soket server
     int fd7[2];
     char str_fd7[2][20];
-    create_pipe(fd7, str_fd7);
-
+    create_pipe(fd7, str_fd7,"master: pipe fd7");
 
     // write in log for debug
     writeLog("MASTER send to server -------- fd1 file desc: %d, %d ", fd1[0], fd1[1]);
@@ -113,60 +110,60 @@ int main()
     //// Pipe for communication between INPUT and SERVER
     int fdi_s[2];
     char str_fdi_s[2][20];
-    
-    create_pipe(fdi_s, str_fdi_s);
+
+    create_pipe(fdi_s, str_fdi_s, "master: pipe fdi_s");
 
     //// Pipe for communication between DRONE and SERVER
     int fdd_s[2];
     char str_fdd_s[2][20];
 
-    create_pipe(fdd_s, str_fdd_s);
+    create_pipe(fdd_s, str_fdd_s, "master: pipe fdd_s");
 
     //// Pipe for communication between SERVER and DRONE
     int fds_d[2];
-    char str_fds_d[2][20]; 
+    char str_fds_d[2][20];
 
-    create_pipe(fds_d, str_fds_d);
+    create_pipe(fds_d, str_fds_d, "master: pipe fds_d");
 
     //// Pipe for communication between TARGET and SERVER ---->> diventa TARGET e SOCKET SERVER
     int fdt_s[2];
     char str_fdt_s[2][20];
 
-    create_pipe(fdt_s, str_fdt_s);
+    create_pipe(fdt_s, str_fdt_s, "master: pipe fdt_s");
 
     //// Pipe for comunication between OBSTACLE and SERVER ---->> diventa OBSTACLE e SOCKET SERVER
     int fdo_s[2];
     char str_fdo_s[2][20];
 
-    create_pipe(fdo_s, str_fdo_s);
+    create_pipe(fdo_s, str_fdo_s, "master: pipe fdo_s");
 
     //// Pipe for comunication between SOCKET SERVER and SERVER send Target
     int fdss_s_t[2];
     char str_fdss_s_t[2][20];
 
-    create_pipe(fdss_s_t, str_fdss_s_t);
+    create_pipe(fdss_s_t, str_fdss_s_t, "master: pipe fdss_s_t");
 
     //// Pipe for comunication between SERVER and SOCKET SERVER send Obstacle
     int fdss_s_o[2];
     char str_fdss_s_o[2][20];
 
-    create_pipe(fdss_s_o, str_fdss_s_o);
+    create_pipe(fdss_s_o, str_fdss_s_o, "master: pipe fdss_s_o");
 
     //// Pipe for comunication between SERVER and SOCKET SERVER send Window_Size
     int fds_ss[2];
     char str_fds_ss[2][20];
 
-    create_pipe(fds_ss, str_fds_ss);
+    create_pipe(fds_ss, str_fds_ss, "master: pipe fds_ss");
 
     //// Pipe for comunication between MASTER and SOCKET SERVER
     int rule_pipe[2];
     char str_rule_pipe[2][20];
 
-    create_pipe(rule_pipe, str_rule_pipe);
+    create_pipe(rule_pipe, str_rule_pipe, "master: pipe rule_pipe");
 
     // write log for debug
-    writeLog("MASTER to server           fdi_s:     %d,%d  fdd_s: %d,%d fds_d: %d,%d  fdss_s_t: %d,%d fdss_s_o: %d,%d  fds_ss: %d,%d", fdi_s[0], fdi_s[1], fdd_s[0], fdd_s[1], fds_d[0], fds_d[1], fdss_s_t[0], fdss_s_t[1],fdss_s_o[0], fdss_s_o[1],  fds_ss[0], fds_ss[1]);
-    writeLog("MASTER to socket server    fdt_s:     %d,%d  fdo_s: %d,%d               fdss_s_t: %d,%d fdss_s_o: %d,%d  fds_ss: %d,%d" , fdt_s[0], fdt_s[1], fdo_s[0], fdo_s[1], fdss_s_t[0], fdss_s_t[1], fdss_s_o[0], fdss_s_o[1], fds_ss[0], fds_ss[1]);
+    writeLog("MASTER to server           fdi_s:     %d,%d  fdd_s: %d,%d fds_d: %d,%d  fdss_s_t: %d,%d fdss_s_o: %d,%d  fds_ss: %d,%d", fdi_s[0], fdi_s[1], fdd_s[0], fdd_s[1], fds_d[0], fds_d[1], fdss_s_t[0], fdss_s_t[1], fdss_s_o[0], fdss_s_o[1], fds_ss[0], fds_ss[1]);
+    writeLog("MASTER to socket server    fdt_s:     %d,%d  fdo_s: %d,%d               fdss_s_t: %d,%d fdss_s_o: %d,%d  fds_ss: %d,%d", fdt_s[0], fdt_s[1], fdo_s[0], fdo_s[1], fdss_s_t[0], fdss_s_t[1], fdss_s_o[0], fdss_s_o[1], fds_ss[0], fds_ss[1]);
     writeLog("MASTER to input            fdi_s:     %d,%d", fdi_s[0], fdi_s[1]);
     writeLog("MASTER to drone            fdd_s:     %d,%d  fds_d: %d,%d  ", fdd_s[0], fdd_s[1], fds_d[0], fds_d[1]);
     writeLog("MASTER to target           fdt_s:     %d,%d", fdt_s[0], fdt_s[1]);
@@ -179,7 +176,7 @@ int main()
     char read_buffer[256];
 
     int rule_pid, real_rule_pid;
-    char *arg_list_rule_print[] = {"konsole", "-e", "./rule_print", str_fd6[0], str_fd6[1], str_rule_pipe[0], str_rule_pipe[1],NULL};
+    char *arg_list_rule_print[] = {"konsole", "-e", "./rule_print", str_fd6[0], str_fd6[1], str_rule_pipe[0], str_rule_pipe[1], NULL};
 
     // create process and launch rule_print
     rule_pid = spawn("konsole", arg_list_rule_print);
@@ -190,49 +187,46 @@ int main()
     writeLog("MASTER RECIVED rule process real pid: %d ", real_rule_pid);
 
     // recuperare le informazioni per l'apertura del server socket
-    if((retVal_read = read(rule_pipe[0], read_buffer, sizeof(read_buffer))) < 0){
-        perror("master: read");
-        writeLog("==> ERROR ==> master: read, %m ");
+    if ((retVal_read = read(rule_pipe[0], read_buffer, sizeof(read_buffer))) < 0)
+    {
+        error("master: read rule_pipe[0]");
     }
 
     printf("read_buffer from rule print: %s\n", read_buffer);
 
-    //parsing the string recived from rule_print
+    // parsing the string recived from rule_print
     char first_arg[100], second_arg[100];
     int ret_val;
 
     ret_val = string_parser(read_buffer, first_arg, second_arg);
 
-    char *arg_list_socket_server_1[] = {"konsole", "-e", "./socket_server", first_arg, str_fd7[0], str_fd7[1], str_fdt_s[0], str_fdt_s[1], str_fdo_s[0], str_fdo_s[1], str_fdss_s_t[0], str_fdss_s_t[1], str_fdss_s_o[0], str_fdss_s_o[1], str_fds_ss[0], str_fds_ss[1], NULL}; 
-    char *arg_list_socket_server_2[] = {"konsole", "-e", "./socket_server", first_arg, second_arg, str_fd7[0], str_fd7[1], str_fdt_s[0], str_fdt_s[1], str_fdo_s[0], str_fdo_s[1] , str_fdss_s_t[0], str_fdss_s_t[1], str_fdss_s_o[0], str_fdss_s_o[1], str_fds_ss[0], str_fds_ss[1], NULL};
+    char *arg_list_socket_server_1[] = {"konsole", "-e", "./socket_server", first_arg, str_fd7[0], str_fd7[1], str_fdt_s[0], str_fdt_s[1], str_fdo_s[0], str_fdo_s[1], str_fdss_s_t[0], str_fdss_s_t[1], str_fdss_s_o[0], str_fdss_s_o[1], str_fds_ss[0], str_fds_ss[1], NULL};
+    char *arg_list_socket_server_2[] = {"konsole", "-e", "./socket_server", first_arg, second_arg, str_fd7[0], str_fd7[1], str_fdt_s[0], str_fdt_s[1], str_fdo_s[0], str_fdo_s[1], str_fdss_s_t[0], str_fdss_s_t[1], str_fdss_s_o[0], str_fdss_s_o[1], str_fds_ss[0], str_fds_ss[1], NULL};
 
-    
-    
     //--- SOCKET SERVER process -------------------------------------------------------------------------------------------------
     if (ret_val == 0)
     {
         child_pids[5] = spawn("konsole", arg_list_socket_server_1);
-        //printf("first_arg: %s\n\n\n", first_arg);
+        // printf("first_arg: %s\n\n\n", first_arg);
     }
     else
     {
         child_pids[5] = spawn("konsole", arg_list_socket_server_2);
-        //printf("first_arg: %s  second_arg: %s\n\n\n", first_arg, second_arg);
+        // printf("first_arg: %s  second_arg: %s\n\n\n", first_arg, second_arg);
     }
-    
+
     writeLog("MASTER spawn socket server with pid: %d ", child_pids[5]);
 
     // recive the correct pid from socket server
     recive_correct_pid(fd7, &child_pids_received[5]);
     writeLog("MASTER RECIVED socket server real pid: %d ", child_pids_received[5]);
-    
 
     // --- GAME SERVER process ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     // Server process is execute with konsole so, the child_pid(correspond to the pid of the kosole) and the child_pid_received( correspod to the pid of process)
-    char *arg_list_server[] = {"konsole", "-e", "./server", str_fd1[0], str_fd1[1], str_fdi_s[0], str_fdi_s[1], str_fdd_s[0], str_fdd_s[1], str_fds_d[0], str_fds_d[1], str_fdss_s_t[0], str_fdss_s_t[1], str_fdss_s_o[0], str_fdss_s_o[1], str_fds_ss[0], str_fds_ss[1], NULL}; 
+    char *arg_list_server[] = {"konsole", "-e", "./server", str_fd1[0], str_fd1[1], str_fdi_s[0], str_fdi_s[1], str_fdd_s[0], str_fdd_s[1], str_fds_d[0], str_fds_d[1], str_fdss_s_t[0], str_fdss_s_t[1], str_fdss_s_o[0], str_fdss_s_o[1], str_fds_ss[0], str_fds_ss[1], NULL};
     child_pids[0] = spawn("konsole", arg_list_server);
     writeLog("MASTER spawn server with pid: %d ", child_pids[0]);
-    
+
     recive_correct_pid(fd1, &child_pids_received[0]);
     writeLog("MASTER RECIVED server real pid: %d ", child_pids_received[0]);
 
@@ -240,7 +234,7 @@ int main()
     char *arg_list_i[] = {"konsole", "-e", "./input", str_fd2[0], str_fd2[1], str_fdi_s[0], str_fdi_s[1], NULL};
     child_pids[1] = spawn("konsole", arg_list_i);
     writeLog("MASTER spawn input with pid: %d ", child_pids[1]);
-    
+
     recive_correct_pid(fd2, &child_pids_received[1]);
     writeLog("MASTER RECIVED input real pid: %d ", child_pids_received[1]);
 
@@ -248,7 +242,7 @@ int main()
     char *arg_list_drone[] = {"./drone", str_fd3[0], str_fd3[1], str_fdd_s[0], str_fdd_s[1], str_fds_d[0], str_fds_d[1], NULL};
     child_pids[2] = spawn("./drone", arg_list_drone);
     writeLog("MASTER spawn drone with pid: %d ", child_pids[2]);
-    
+
     recive_correct_pid(fd3, &child_pids_received[2]);
     writeLog("MASTER RECIVED drone real pid: %d ", child_pids_received[2]);
 
@@ -256,7 +250,7 @@ int main()
     char *arg_list_target[] = {"./target", str_fd4[0], str_fd4[1], str_fdt_s[0], str_fdt_s[1], NULL};
     child_pids[3] = spawn("./target", arg_list_target);
     writeLog("MASTER spawn target with pid: %d ", child_pids[3]);
-    
+
     recive_correct_pid(fd4, &child_pids_received[3]);
     writeLog("MASTER RECIVED target real pid: %d ", child_pids_received[3]);
 
@@ -264,7 +258,7 @@ int main()
     char *arg_list_obstacle[] = {"./obstacle", str_fd5[0], str_fd5[1], str_fdo_s[0], str_fdo_s[1], NULL};
     child_pids[4] = spawn("./obstacle", arg_list_obstacle);
     writeLog("MASTER spawn obstacle with pid: %d ", child_pids[4]);
-    
+
     recive_correct_pid(fd5, &child_pids_received[4]);
     writeLog("MASTER RECIVED obstacle real pid: %d ", child_pids_received[4]);
 
@@ -288,7 +282,7 @@ int main()
     child_pids[num_ps] = spawn("./wd", arg_list_wd);
     writeLog("MASTER spawn WATCHDOG with pid: %d ", child_pids[num_ps]);
     // The master will wait until all the process will terminate
-    
+
     pid_t waitResult;
     int status;
     for (i = 0; i <= num_ps; i++)
@@ -296,9 +290,8 @@ int main()
         waitResult = waitpid(child_pids[i], &status, 0);
         if (waitResult == -1)
         {
-            perror("master: waitpid ");
-            writeLog("==> ERROR ==> master: waitpid, %m ");
-            return 3;
+            error("master: waitpid ");
+
         }
         if (WIFEXITED(status))
         {
@@ -312,11 +305,12 @@ int main()
         }
     }
     */
-    
+
     return 0;
 }
 
-int string_parser(char *string, char *first_arg, char *second_arg){
+int string_parser(char *string, char *first_arg, char *second_arg)
+{
     // define the char that separate the arguments in the string
     char *separator = " ";
     char *arg;
@@ -326,9 +320,12 @@ int string_parser(char *string, char *first_arg, char *second_arg){
     strcpy(first_arg, arg);
 
     arg = strtok(NULL, separator);
-    if(arg == NULL){
+    if (arg == NULL)
+    {
         ret_val = 0;
-    }else{  
+    }
+    else
+    {
         ret_val = 1;
         strcpy(second_arg, arg);
     }
