@@ -49,12 +49,12 @@ int main(int argc, char *argv[]){
 
     int info_pipe[2];
     for(int i = 0; i<2; i++){
-        info_pipe[i] = atoi(argv[i+3]);
+        info_pipe[i] = atoi(argv[i+5]);
     }
     if(close(info_pipe[0]) < 0){
         perror("close info pipe in rule_print");
     }
-    writeLog("RULE PRINT value of INFO pipe are: %d, %d ", info_pipe[0], info_pipe[1]);
+    writeLog("RULE PRINT value of socket info pipe are: %d, %d ", info_pipe[0], info_pipe[1]);
 
     char socket_info[100];
     char first_arg[100], second_arg[100];

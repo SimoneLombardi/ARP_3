@@ -204,20 +204,6 @@ int main()
     recive_correct_pid(fd6, &real_rule_pid);
     writeLog("MASTER RECIVED rule process real pid: %d ", real_rule_pid);
 
-    // recuperare le informazioni per l'apertura del server socket
-    if ((retVal_read = read(rule_pipe[0], read_buffer, sizeof(read_buffer))) < 0)
-    {
-        error("master: read rule_pipe[0]");
-    }
-
-    printf("read_buffer from rule print: %s\n", read_buffer);
-
-    // parsing the string recived from rule_print
-    char first_arg[100], second_arg[100];
-    int ret_val;
-
-    ret_val = string_parser(read_buffer, first_arg, second_arg);
-
     // --- GAME SERVER process ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     // Server process is execute with konsole so, the child_pid(correspond to the pid of the kosole) and the child_pid_received( correspod to the pid of process)
     char *arg_list_server[] = {"konsole", "-e", "./server", str_fd1[0], str_fd1[1], str_fdi_s[0], str_fdi_s[1], str_fdd_s[0], str_fdd_s[1], str_fds_d[0], str_fds_d[1], str_fdss_s_t[0], str_fdss_s_t[1], str_fdss_s_o[0], str_fdss_s_o[1], str_fds_ss[0], str_fds_ss[1], NULL};

@@ -27,10 +27,12 @@
 
 void client_handling_function(int pipe_fd, int socket_fd, int port_no, char *ip_address);
 
+int string_parser(char *string, char *first_arg, char *second_arg);
+
 void pipe_fd_init(int fd_array[][2], char *argv[], int indx_offset)
 {
     int j = 0;
-    for (int i = 0; i < 6; i++)
+    for (int i = 0; i < 7; i++)
     {
         fd_array[i][0] = atoi(argv[j + indx_offset]);
         fd_array[i][1] = atoi(argv[j + indx_offset + 1]);
@@ -55,11 +57,13 @@ int main(int argc, char *argv[])
     pipe_fd_init(fd_unpack, argv, 1);
 
     // visualizza i file descriptor
-    for (int i = 0; i < 5; i++)
+    for (int i = 0; i < 7; i++)
     {
         printf("fd_unpack[%d][0] = %d\n", i, fd_unpack[i][0]);
         printf("fd_unpack[%d][1] = %d\n", i, fd_unpack[i][1]);
     }
+
+    sleep(3);
 
     // associa i file descriptor alle variabli nominali
     fd7[0] = fd_unpack[0][0]; // pid pipe
@@ -164,7 +168,17 @@ int main(int argc, char *argv[])
 
     fflush(stdout);
 
+    printf("controllo\n");
+
     // send socket info rule print 
+     // reciveing the socket information
+    if((read(fdrp_ss[0], socket_info, sizeof(socket_info)) < 0)){
+        error("soket server: read fdrp_ss[0]");
+    }
+
+
+    int retVall;
+    retVall = string_parser(socket_info, string_ip, string_port_no);
 
 
     // reciveing the window size
@@ -174,12 +188,8 @@ int main(int argc, char *argv[])
     }
     writeLog("SOCKET SERVER: window size row: %d, col: %d", window_size[0], window_size[1]);
 
-    // reciveing the socket information
-    if((read(fdrp_ss[0], socket_info, sizeof(socket_info)) < 0)){
-        error("soket server: read fdrp_ss[0]");
-    }
 
-    if (argc == 14)
+    if (retVall == 0)
     {
         // SINGLE PLAYER MODE
 
@@ -408,4 +418,28 @@ void client_handling_function(int pipe_fd, int socket_fd, int port_no, char *ip_
             error("ERROR reading from socket");
         printf("%s\n", buffer);
     }*/
+}
+
+int string_parser(char *string, char *first_arg, char *second_arg)
+{
+    // define the char that separate the arguments in the string
+    char *separator = " ";
+    char *arg;
+    int ret_val;
+
+    arg = strtok(string, separator);
+    strcpy(first_arg, arg);
+
+    arg = strtok(NULL, separator);
+    if (arg == NULL)
+    {
+        ret_val = 0;
+    }
+    else
+    {
+        ret_val = 1;
+        strcpy(second_arg, arg);
+    }
+
+    return ret_val;
 }
