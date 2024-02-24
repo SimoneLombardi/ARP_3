@@ -229,7 +229,7 @@ int main()
     recive_correct_pid(fd3, &child_pids_received[2]);
     writeLog("MASTER RECIVED drone real pid: %d ", child_pids_received[2]);
 
-    //---- TARGET process -----------------------------------------------------------------------------------------------------
+    // --- TARGET process -----------------------------------------------------------------------------------------------------
     char *arg_list_target[] = {"./target", str_fd4[0], str_fd4[1], str_fdt_s[0], str_fdt_s[1], NULL};
     child_pids[3] = spawn("./target", arg_list_target);
     writeLog("MASTER spawn target with pid: %d ", child_pids[3]);
@@ -237,7 +237,7 @@ int main()
     recive_correct_pid(fd4, &child_pids_received[3]);
     writeLog("MASTER RECIVED target real pid: %d ", child_pids_received[3]);
 
-    //---- OBSTACLE process -------------------------------------------------------------------------------------------------------
+    // --- OBSTACLE process -------------------------------------------------------------------------------------------------------
     char *arg_list_obstacle[] = {"./obstacle", str_fd5[0], str_fd5[1], str_fdo_s[0], str_fdo_s[1], NULL};
     child_pids[4] = spawn("./obstacle", arg_list_obstacle);
     writeLog("MASTER spawn obstacle with pid: %d ", child_pids[4]);
@@ -259,7 +259,7 @@ int main()
     writeLog("MASTER: child_pids are: %s, %s, %s, %s, %s ", str_child_pids[0], str_child_pids[1], str_child_pids[2], str_child_pids[3], str_child_pids[4]);
     writeLog("MASTER child_pids_received are: %s, %s, %s, %s, %s", str_child_pids_received[0], str_child_pids_received[1], str_child_pids_received[2], str_child_pids_received[3], str_child_pids_received[4]);
     /*
-    //------- WATCHDOG process --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    // --- WATCHDOG process --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     // spawn watchdog, and pass as argument all the pids of processes
     char *arg_list_wd[] = {"./wd", str_child_pids[0], str_child_pids[1], str_child_pids[2], str_child_pids[3], str_child_pids[4], str_child_pids_received[0], str_child_pids_received[1], str_child_pids_received[2], str_child_pids_received[3], str_child_pids_received[4], NULL};
     child_pids[num_ps] = spawn("./wd", arg_list_wd);
