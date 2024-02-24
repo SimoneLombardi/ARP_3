@@ -59,6 +59,7 @@ int main(int argc, char *argv[]){
     char socket_info[100];
     char first_arg[100], second_arg[100];
     int ret_val;
+    int inputVal;
 
     int Srow, Scol;
 
@@ -79,18 +80,21 @@ int main(int argc, char *argv[]){
 
         clear();
         refresh();
-    }while(input_validation(ret_val, first_arg, second_arg) == 0);
+    }while((inputVal = input_validation(ret_val, first_arg, second_arg) == 0));
 
 
 
     endwin();
 
     // send the socket info to the master process
+    socket_info[strcspn(socket_info, "\n")] = 0;
     int Wret;
     if((Wret = write(info_pipe[1], socket_info, strlen(socket_info))) < 0){
         perror("write in rule_print");
         exit(1);
     }
+
+    writeLog("controllo per valori inviati: %d, %s", Wret, socket_info);
 
     // close pipe fd
     close(info_pipe[1]);
@@ -103,14 +107,20 @@ int string_parser(char *string, char *first_arg, char *second_arg){
     char *separator = " ";
     char *arg;
     int ret_val;
+    char temp[256];
 
-    arg = strtok(string, separator);
+    strcpy(temp, string);
+
+    arg = strtok(temp, separator);
     strcpy(first_arg, arg);
 
     arg = strtok(NULL, separator);
-    if(arg == NULL){
+    if (arg == NULL)
+    {
         ret_val = 0;
-    }else{  
+    }
+    else
+    {
         ret_val = 1;
         strcpy(second_arg, arg);
     }

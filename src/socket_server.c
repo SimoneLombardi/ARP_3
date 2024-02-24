@@ -25,7 +25,9 @@
 #define h_addr h_addr_list[0] /* for backward compatibility */
 // the variable h_addr is the first address in the list h_addr_list
 
-void client_handling_function(int pipe_fd, int socket_fd, int port_no, char *ip_address);
+void client_handling_function(int pipe_fd, int port_no, char *ip_address);
+
+void server_handling_function(int new_sockfd);
 
 int string_parser(char *string, char *first_arg, char *second_arg);
 
@@ -62,8 +64,6 @@ int main(int argc, char *argv[])
         printf("fd_unpack[%d][0] = %d\n", i, fd_unpack[i][0]);
         printf("fd_unpack[%d][1] = %d\n", i, fd_unpack[i][1]);
     }
-
-    sleep(3);
 
     // associa i file descriptor alle variabli nominali
     fd7[0] = fd_unpack[0][0]; // pid pipe
@@ -120,7 +120,7 @@ int main(int argc, char *argv[])
     // parent process handles the SERVER side ---> solo se getpid() == father_pid
     // variabili gestione socket
     int sock_fd, newsock_fd, port_no, cli_len, ret_n;
-    char string_port_no[10];
+    char string_port_no[100], correct_str_port_no[100];
     char socket_info[100];
     char string_ip[INET_ADDRSTRLEN];
 
@@ -157,16 +157,9 @@ int main(int argc, char *argv[])
     // set fd to listen
     listen(sock_fd, 5);
 
-    printf("selected port no: %d", port_no);
+    cli_len = sizeof(cli_addr);
 
-    struct sockaddr_in* caccapuzza = (struct sockaddr_in *)&serv_addr;
-    struct in_addr ipAddr = caccapuzza->sin_addr; 
-
-    char str[INET_ADDRSTRLEN];
-    inet_ntop(AF_INET, &ipAddr, str,INET_ADDRSTRLEN);
-    printf(" -- ip address: %s", str);
-
-    fflush(stdout);
+    printf("selected port no: %d\n", port_no);
 
     printf("controllo\n");
 
@@ -180,6 +173,26 @@ int main(int argc, char *argv[])
     int retVall;
     retVall = string_parser(socket_info, string_ip, string_port_no);
 
+    for (i = 0; i < 5; i++){
+        correct_str_port_no[i] = string_port_no[i];
+    }
+
+    printf("valore retVall: %d\n", retVall);
+    fflush(stdout);
+
+    printf("valori delle stringhe: %s, %s, %s\n", string_ip, string_port_no, socket_info);
+    fflush(stdout);
+
+    printf("correct string port no: %s\n", correct_str_port_no);
+    fflush(stdout);
+
+    memset(string_port_no, '\0', sizeof(string_port_no));
+    strcpy(string_port_no, correct_str_port_no);
+
+    printf("corrected str port no: %s\n", string_port_no);
+    fflush(stdout);
+    
+    
 
     // reciveing the window size
     if (read(fds_ss[0], window_size, sizeof(int) * 2) < 0)
@@ -192,7 +205,9 @@ int main(int argc, char *argv[])
     if (retVall == 0)
     {
         // SINGLE PLAYER MODE
-
+        printf("singleplayer mode activated\n");
+        fflush(stdout);
+        
         // variable for select, usefull only for single player
         int retVal_sel;
         int retVal_read;
@@ -318,8 +333,12 @@ int main(int argc, char *argv[])
     }
     else
     {
+        printf("multiplayer mode activated\n");
+        fflush(stdout);
+        
         // MULTIPLYER MODE
         pid_t targhet_client_pid, obstacle_client_pid;
+        pid_t father_pid = getpid();
 
         if ((targhet_client_pid = fork()) < 0)
         {
@@ -333,30 +352,67 @@ int main(int argc, char *argv[])
                 error("socket server: fork obstacle_client_pid");
             }
         }
+
+        // show the info for connection to screen
+        if(getpid() == father_pid){
+            
+            
+            int pid;
+            while(1){
+                if(getpid() == father_pid){
+                    printf("server activated\n");
+                    fflush(stdout);
+
+                    newsock_fd = accept(sock_fd, (SA *)&cli_addr, &cli_len);
+                    if(newsock_fd < 0){
+                        error("socket server: error on accept");
+                    }
+                    else{
+                        printf("Connection established\n");
+                    }
+
+                    pid = fork();
+                    if(pid < 0){
+                        error("socket server: error on fork, for client handling");
+                    }
+
+                    if(pid == 0){
+                        close(sock_fd);
+                        server_handling_function(newsock_fd);
+                    }
+                    else{
+                        close(newsock_fd);
+                    }
+                }
+            }
+        }
+
         if (targhet_client_pid == 0)
         {
             // server child process
-            while (1)
-            {
-            }
+            sleep(3);
+            client_handling_function(fd7[1], atoi(string_port_no), string_ip);
+            
         }
         if (obstacle_client_pid == 0)
         {
             // client child process
-            while (1)
-            {
-            }
+            sleep(3);
+            client_handling_function(fd7[1], atoi(string_port_no), string_ip);
         }
 
-        // show the info for connection to screen
+        
     }
 
     return 0;
 }
 
-void client_handling_function(int pipe_fd, int socket_fd, int port_no, char *ip_address)
+void client_handling_function(int pipe_fd, int port_no, char *ip_address)
 {
     // variabili gestione socket
+    printf("attivato client: %d\n", getpid());
+    fflush(stdout);
+
     int sock_fd, port_no_cli;
     int retR_n, retW_n, ret_n;
     int buffer_send;
@@ -418,6 +474,62 @@ void client_handling_function(int pipe_fd, int socket_fd, int port_no, char *ip_
             error("ERROR reading from socket");
         printf("%s\n", buffer);
     }*/
+    char buffer_send_oo[256];
+    char buffer_rec[256];
+    int n;
+
+    while(1){
+        printf("enter message: ");
+
+        bzero(buffer_send_oo, 256);// set the sending string to zero
+
+        fgets(buffer_send_oo, 255, stdin);// get the message from the user
+        
+        // check if the user wants to exit
+        if(strcmp(buffer_send_oo, "exit") == 0){
+            printf("Exiting...\n");
+            close(sock_fd);
+
+            exit(0);
+        }
+
+        n = write(sock_fd, buffer_send_oo, strlen(buffer_send_oo));
+        if (n<0)
+            error("ERROR writing to socket, client");
+
+        bzero(buffer_rec, 256);
+
+        n = read(sock_fd, buffer_rec, 255);
+        if(n<0)
+            error("ERROR reading from socket, client");
+        printf("%s\n", buffer_rec);
+    }
+}
+
+void server_handling_function(int new_sockfd){
+    printf("activated server handler -- %d\n", getpid());
+    fflush(stdout);
+    
+    char buffer[256];
+    int n;
+
+    // retrive info of the process for client handling
+    int pid = getpid();
+
+    bzero(buffer, 256);
+    n = read(new_sockfd, buffer, 255);
+    if (n < 0)
+    {
+        error("ERROR reading from socket");
+    }
+
+    printf("Here is the message: %s\n", buffer);
+
+    n = write(new_sockfd, "I got your message", 18);
+    if (n < 0)
+    {
+        error("ERROR writing to socket");
+    }
 }
 
 int string_parser(char *string, char *first_arg, char *second_arg)
@@ -426,8 +538,11 @@ int string_parser(char *string, char *first_arg, char *second_arg)
     char *separator = " ";
     char *arg;
     int ret_val;
+    char temp[256];
 
-    arg = strtok(string, separator);
+    strcpy(temp, string);
+
+    arg = strtok(temp, separator);
     strcpy(first_arg, arg);
 
     arg = strtok(NULL, separator);
