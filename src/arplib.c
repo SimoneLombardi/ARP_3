@@ -31,11 +31,12 @@ int spawn(const char *program, char **arg_list)
 
 /* function for write in logfile*/
 
-
-void writeLog(const char *format, ...) {
+void writeLog(const char *format, ...)
+{
     // Open the log file for appending
     FILE *logfile = fopen("../log/logfile.txt", "a");
-    if (logfile == NULL) {
+    if (logfile == NULL)
+    {
         perror("server: error opening logfile");
         exit(EXIT_FAILURE);
     }
@@ -69,13 +70,13 @@ void writeLog(const char *format, ...) {
     fflush(logfile);
 
     // Close the log file, handle errors if closing fails
-    if (fclose(logfile) == -1) {
+    if (fclose(logfile) == -1)
+    {
         perror("fclose logfile");
         // Log an error message if closing the file fails
         writeLog("ERROR ==> server: fclose logfile");
     }
 }
-
 
 // return sign of arg X
 int sign(int x)
@@ -89,7 +90,8 @@ int sign(int x)
 }
 
 // create a pipe and convert the value to string for send the fd
-void create_pipe(int pipe_fd[], char string_pipe_fd[][20]){
+void create_pipe(int pipe_fd[], char string_pipe_fd[][20])
+{
     // create the pipe
     if ((pipe(pipe_fd)) < 0)
     {
@@ -105,10 +107,11 @@ void create_pipe(int pipe_fd[], char string_pipe_fd[][20]){
 
 // save the real pid of the process
 // ARGS: 1) pipe array fd, 2) address of the variable to save the pid ex: &child_pids_received[i]
-void recive_correct_pid(int pipe_fd[2], int *pid_address){
+void recive_correct_pid(int pipe_fd[2], int *pid_address)
+{
     // close the write file descriptor
     if (close(pipe_fd[1]) == -1)
-    {   
+    {
         perror("master: close RD");
         writeLog("==> ERROR ==> master: close pipe RD, %m ");
     }
@@ -125,4 +128,18 @@ void recive_correct_pid(int pipe_fd[2], int *pid_address){
     }
 }
 
+// function for unpack socket messages, return 0 if trg and 1 for obj
+bool unpack_messages(char str_buffer[])
+{
+    char identification;
+    identification = str_buffer[0];
+    if (identification == "T")
+    {
+        // target message
+        return 0;
 
+    }else if(identification == "O"){
+        // object message
+        return 1;
+    }
+}
