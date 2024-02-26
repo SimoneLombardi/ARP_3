@@ -14,6 +14,7 @@ gcc -o bin/master src/master.c -L./lib -larplib
 gcc -o bin/server src/server.c -L./lib -larplib -lncurses -lm
 gcc -o bin/input src/input.c -L./lib -larplib -lncurses
 gcc -o bin/socket_server src/socket_server.c -L./lib -larplib -lncurses
+gcc -o bin/socket src/socket.c -L./lib -larplib -lncurses
 gcc -o bin/drone src/drone.c -L./lib -larplib
 gcc -o bin/target src/target.c -L./lib -larplib
 gcc -o bin/obstacle src/obstacle.c -L./lib -larplib
