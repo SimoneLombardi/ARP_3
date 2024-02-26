@@ -135,7 +135,7 @@ int main(int argc, char *argv[])
     bzero((char *)&serv_addr, sizeof(serv_addr));
 
     // set the port number
-    port_no = 49152;
+    port_no = 50000;
 
     // set the socket struct
     serv_addr.sin_family = AF_INET;
@@ -153,7 +153,7 @@ int main(int argc, char *argv[])
 
     inet_ntop(AF_INET, &(serv_addr.sin_addr), string_ip, INET_ADDRSTRLEN);
     printf("Server listening on IP address: %s, Port: %d\n", string_ip, ntohs(serv_addr.sin_port));
-
+    fflush(stdout);
     // set fd to listen
     listen(sock_fd, 5);
 
@@ -375,8 +375,7 @@ int main(int argc, char *argv[])
 
         // show the info for connection to screen
         if(getpid() == father_pid){
-            
-            
+             
             int pid;
             while(1){
                 if(getpid() == father_pid){
@@ -428,10 +427,19 @@ int main(int argc, char *argv[])
     return 0;
 }
 
+
+
+
+
+
+//////////////////////////////////////////////////////////////////////////////////
+//                     PORCA MADONNA
+//////////////////////////////////////////////////////////////////////////////////
 void client_handling_function(int pipe_fd, int port_no, char *ip_address)
 {
     // variabili gestione socket
     printf("attivato client: %d\n", getpid());
+    printf("pora che arriva ai client %d\n", port_no);
     fflush(stdout);
 
     int sock_fd, port_no_cli;
@@ -451,7 +459,7 @@ void client_handling_function(int pipe_fd, int port_no, char *ip_address)
         sprintf(error_msg, "ERROR opening socket -- %d", proc_dip);
         error(error_msg);
     }
-
+    printf(SOCK_STREAM.)
     if ((server = gethostbyname(ip_address)) == NULL)
     {
         sprintf(error_msg, "ERROR, no such host -- %d", proc_dip);
@@ -545,6 +553,7 @@ void server_handling_function(int new_sockfd){
     }
 
     printf("Here is the message: %s\n", buffer);
+    fflush(stdout);
 
     n = write(new_sockfd, "I got your message", 18);
     if (n < 0)
