@@ -80,6 +80,11 @@ void server(int readFD_winSize)
     printf("== server : Local Port: %d\n", ntohs(serv_addr.sin_port));
     fflush(stdout);
 
+    char buffer[100];
+    char read_buffer[100];
+
+    int n;
+
     while (1)
     {
         printf("server activated\n");
@@ -98,6 +103,20 @@ void server(int readFD_winSize)
             printf("Connection established\n");
             fflush(stdout);
         }
+
+        // read test info
+        bzero(buffer, 100);
+        printf("send: ");
+        fgets(buffer, 100, stdin);
+
+        buffer[strcspn(buffer, "\n")] = 0;
+
+        n = write(newsock_fd, buffer, strlen(buffer));
+        if (n < 0)
+        {
+            error("socket server: error writing to socket");
+        }
+        
     }
     ////////////////////////
 }
@@ -189,6 +208,20 @@ void client(int readFD_rule, int readFD_winSize)
         }
         
     }while(ret_n < 0);
+
+    // send test info to the server
+    char buffer[100];
+
+    int n;
+
+    bzero(buffer, 100);
+    n = read(sock_fd, buffer, 100);
+    if(n < 0){
+        error("socket server: error reading from socket");
+    }else{
+        printf("\nfrom(%s): %s\n", inet_ntoa(*(struct in_addr *)server->h_addr), buffer);
+    }
+
 
     exit(EXIT_SUCCESS);
 }
