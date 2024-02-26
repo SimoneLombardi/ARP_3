@@ -369,6 +369,7 @@ int main(int argc, char *argv[])
                     }
                     else{
                         printf("Connection established\n");
+                        fflush(stdout);
                     }
 
                     pid = fork();
