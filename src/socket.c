@@ -26,6 +26,20 @@
 
 int string_parser(char *string, char *first_arg, char *second_arg);
 
+// function called after acept in server
+void serverHandlingFunction(int newsock_fd)
+{
+    // buffer for communication
+    char buffer_send[MAX_MSG_LENGHT];
+    char buffer_rec[MAX_MSG_LENGHT];
+    char echo[MAX_MSG_LENGHT];
+    int n;
+
+    // inizialization communication
+    
+
+}
+
 void server(int readFD_winSize)
 {
     //// server variable ////
@@ -90,98 +104,77 @@ void server(int readFD_winSize)
     printf("== server : Local Port: %d\n", ntohs(serv_addr.sin_port));
     fflush(stdout);
 
-    char buffer[100];
-    char read_buffer[100];
-
-    int n;
+    // variabe for fork after acept
+    pid_t pid;
+    pid_t father_pid = getpid();
 
     while (1)
     {
-        printf("server activated\n");
-        fflush(stdout);
-
-        newsock_fd = accept(sock_fd, (struct sockaddr *)&cli_addr, &cli_len);
-        if (newsock_fd < 0)
+        if (getpid() == father_pid)
         {
-            error("socket server: error on accept");
-            printf("== server : Remote IP: %s\n", inet_ntoa(cli_addr.sin_addr));
-            printf("== server : Remote Port: %d\n", ntohs(cli_addr.sin_port));
+            // in father pid
+            printf("server activated\n");
             fflush(stdout);
-        }
-        else
-        {
-            printf("Connection established\n");
-            fflush(stdout);
-        }
-        
-        // read test info
-        bzero(buffer, 100);
-        printf("send: ");
-        fgets(buffer, 100, stdin);
 
-        buffer[strcspn(buffer, "\n")] = 0;
+            // accept te connection from client, and generate new file descriptor
+            newsock_fd = accept(sock_fd, (struct sockaddr *)&cli_addr, &cli_len);
+            if (newsock_fd < 0)
+            {
+                error("socket server: error on accept");
+                printf("== server : Remote IP: %s\n", inet_ntoa(cli_addr.sin_addr));
+                printf("== server : Remote Port: %d\n", ntohs(cli_addr.sin_port));
+                fflush(stdout);
+            }
+            else
+            {
+                printf("Connection established\n");
+                fflush(stdout);
+            }
 
-        n = write(newsock_fd, buffer, strlen(buffer));
-        if (n < 0)
-        {
-            error("socket server: error writing to socket");
+            if ((pid = fork()) < 0)
+            {
+                error("socket_server: server function fork");
+            }
         }
-        
+        if (pid == 0)
+        {
+            closeAndLog(sock_fd, "socket_server close sock_fd");
+            serverHandlingFunction(newsock_fd);
+        }
     }
     ////////////////////////
 }
 
-void client(int readFD_rule, int readFD_winSize)
+void client(int port_no_cli, char *string_ip, char *client_ID, int fd_obst_or_targ)
 {
-    // client vairables
-    int retVall;
-    int window_size[2]; //[row, col]
-    char socket_info[100], string_ip[100], string_port_no[100], correct_str_port_no[100];
-
-    int sock_fd, port_no_cli;
+    int n;
+    int sock_fd;
     int retR_n, retW_n, ret_n;
-    int buffer_send;
 
-    int proc_dip = getpid(); // use the pid to recognise the client process
+    int proc_pid = getpid(); // use the pid to recognise the client process
     char error_msg[100];     // string for error message
 
     SAI server_address;
     HE *server;
 
-    // recive the socket information from rule print
-    if ((read(readFD_rule, socket_info, sizeof(socket_info)) < 0))
-    {
-        error("soket server: read fdrp_ss[0]");
-    }
-
-    retVall = string_parser(socket_info, string_ip, string_port_no);
-
-    printf("== client : string_ip: %s\n", string_ip);
-    printf("== client : string_port_no: %s\n", string_port_no);
-    fflush(stdout);
-
-    port_no_cli = atoi(string_port_no);
-    printf("== client : port_no_cli (after atoi) %d\n", port_no_cli);
-
-    // reciveing the window size
-    if (read(readFD_winSize, window_size, sizeof(int) * 2) < 0)
-    {
-        error("socket server: read fds_ss[0]");
-    }
-    writeLog("SOCKET SERVER: client window size row: %d, col: %d", window_size[0], window_size[1]);
+    // comunicatioN variable
+    char buffer_send[MAX_MSG_LENGHT]; // for send the data converted in string
+    char buffer_rec[MAX_MSG_LENGHT];  // write the received data in string
+    char echo[MAX_MSG_LENGHT];
+    double window_size[2]; //[row, col]
 
     ///////////// socket client code /////////////////
     // create the socket of the client
     if ((sock_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
     {
-        sprintf(error_msg, "ERROR opening socket -- %d", proc_dip);
+        sprintf(error_msg, "ERROR opening socket -- %d", proc_pid);
         error(error_msg);
     }
 
     // recover server ip address from the string
     if ((server = gethostbyname(string_ip)) == NULL)
     {
-        sprintf(error_msg, "ERROR, no such host -- %d", proc_dip);
+        sprintf(error_msg, "ERROR, no such host -- %d", proc_pid);
         error(error_msg);
     }
 
@@ -216,9 +209,46 @@ void client(int readFD_rule, int readFD_winSize)
         {
             writeLog("SOCKET SERVER: client connected to the server");
         }
-        
-    }while(ret_n < 0);
 
+    } while (ret_n < 0);
+
+    // communication initiaization
+
+    // send the identifier to server
+    n = write(sock_fd, client_ID, sizeof(client_ID));
+    if (n == -1)
+    {
+        error("socket_server: write in socket");
+    }
+
+    // set to zero the echo array
+    bzero(echo, MAX_MSG_LENGHT);
+
+    // read the echo
+    n = read(sock_fd, echo, sizeof(echo));
+    if (n == -1)
+    {
+        error("socket_server: write in socket");
+    }
+    printf("%s: %s -- echo", client_ID, echo);
+
+    // read the window size from server
+    n = read(sock_fd, buffer_rec, sizeof(buffer_rec));
+    if (n == -1)
+    {
+        error("socket_server: read from socket");
+    }
+    printf("read window size %s: %s", client_ID, buffer_rec);
+
+    // send the window size as echo to server
+    n = write(sock_fd, buffer_rec, sizeof(buffer_rec));
+    if (n == -1)
+    {
+        error("socket_server: write in socket");
+    }
+    // convert dimension window in double
+    sscanf(buffer_rec, "%.3f,%.3f", &window_size[0], &window_size[1]);
+    printf("window sizw converted in double %s: %f,%f", client_ID, window_size[0], window_size[1]);
 
     exit(EXIT_SUCCESS);
 }
@@ -298,13 +328,56 @@ int main(int argc, char *argv[])
     pid_t pid = fork();
     if (pid == -1)
     {
-        perror("fork failed");
-        exit(EXIT_FAILURE);
+        error("socket_server: fork failed");
     }
     else if (pid == 0)
     {
         // Child process
-        client(fdrp_ss[0], fds_ss[0]);
+        // prendere ip e address, fare fork e creare i target e obstacle
+        char socket_info[100], string_ip[100], string_port_no[100], correct_str_port_no[100];
+        int retVall, port_no_cli;
+        int obst_pid, targ_pid;
+
+        // recive the socket information from rule print
+        if ((read(fdrp_ss[0], socket_info, sizeof(socket_info)) < 0))
+        {
+            error("soket server: read fdrp_ss[0]");
+        }
+
+        retVall = string_parser(socket_info, string_ip, string_port_no);
+
+        printf("== client : string_ip: %s\n", string_ip);
+        printf("== client : string_port_no: %s\n", string_port_no);
+        fflush(stdout);
+
+        port_no_cli = atoi(string_port_no);
+        printf("== client : port_no_cli (after atoi) %d\n", port_no_cli);
+
+        // create a process for obstacle and one for targhet
+        obst_pid = fork();
+        if (obst_pid < 0)
+        {
+            error("SOCKET SERVER, client: fork obstacle client");
+        }
+        if (obst_pid != 0)
+        {
+            // inside father client process
+            targ_pid = fork();
+            if (targ_pid < 0)
+            {
+                error("SOCKET SERVER, client: fork targhet client");
+            }
+        }
+        if (obst_pid == 0)
+        {
+            // inisied client process for obstacle
+            client(port_no_cli, string_ip, "OI", fdss_s_o[0]);
+        }
+        if (targ_pid == 0 && obst_pid != 0)
+        {
+            // inisied client process for targhet
+            client(port_no_cli, string_ip, "TI", fdss_s_t[0]);
+        }
     }
     else
     {
