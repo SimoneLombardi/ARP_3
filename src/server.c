@@ -219,7 +219,11 @@ int main(int argc, char *argv[])
     wrefresh(spawn_window);
 
     // read the set of target (blocking read)
-    if ((retVal_read = read(fdss_s_t[0], set_of_target, sizeof(double) * MAX_TARG_ARR_SIZE * 2)) == -1)
+    do
+    {
+        retVal_read = read(fdss_s_t[0], set_of_target, sizeof(double) * MAX_TARG_ARR_SIZE * 2);
+    } while (retVal_read == -1 && errno == EINTR);
+    if (retVal_read == -1)
     {
         error("server: read fdss_s_t[0]");
     }

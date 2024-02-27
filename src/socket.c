@@ -317,6 +317,7 @@ int main(int argc, char *argv[])
     return 0;
 }
 
+
 int string_parser(char *string, char *first_arg, char *second_arg)
 {
     // define the char that separate the arguments in the string
