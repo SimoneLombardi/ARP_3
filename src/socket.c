@@ -37,6 +37,9 @@ void server(int readFD_winSize)
     // socket struct
     SAI serv_addr, cli_addr;
 
+    // server variable
+    int window_size[2]; //[row, col]
+
     if ((sock_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
     {
         error("socket_server: error opening socket");
@@ -75,6 +78,13 @@ void server(int readFD_winSize)
     }
 
     cli_len = sizeof(cli_addr);
+
+    // reciveing the window size
+    if (read(readFD_winSize, window_size, sizeof(int) * 2) < 0)
+    {
+        error("socket server: read fds_ss[0]");
+    }
+    writeLog("SOCKET SERVER: window size row: %d, col: %d", window_size[0], window_size[1]);
 
     printf("== server : Local IP: %s\n", inet_ntoa(serv_addr.sin_addr));
     printf("== server : Local Port: %d\n", ntohs(serv_addr.sin_port));
@@ -209,19 +219,6 @@ void client(int readFD_rule, int readFD_winSize)
         
     }while(ret_n < 0);
 
-    // send test info to the server
-    char buffer[100];
-
-    int n;
-
-    bzero(buffer, 100);
-    n = read(sock_fd, buffer, 100);
-    if(n < 0){
-        error("socket server: error reading from socket");
-    }else{
-        printf("\nfrom(%s): %s\n", inet_ntoa(*(struct in_addr *)server->h_addr), buffer);
-    }
-
 
     exit(EXIT_SUCCESS);
 }
@@ -316,7 +313,6 @@ int main(int argc, char *argv[])
     }
     return 0;
 }
-
 
 int string_parser(char *string, char *first_arg, char *second_arg)
 {
