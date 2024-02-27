@@ -84,7 +84,7 @@ void server(int readFD_winSize)
     {
         error("socket server: read fds_ss[0]");
     }
-    writeLog("SOCKET SERVER: window size row: %d, col: %d", window_size[0], window_size[1]);
+    writeLog("SOCKET SERVER: server window size row: %d, col: %d", window_size[0], window_size[1]);
 
     printf("== server : Local IP: %s\n", inet_ntoa(serv_addr.sin_addr));
     printf("== server : Local Port: %d\n", ntohs(serv_addr.sin_port));
@@ -113,7 +113,7 @@ void server(int readFD_winSize)
             printf("Connection established\n");
             fflush(stdout);
         }
-
+        
         // read test info
         bzero(buffer, 100);
         printf("send: ");
@@ -168,7 +168,7 @@ void client(int readFD_rule, int readFD_winSize)
     {
         error("socket server: read fds_ss[0]");
     }
-    writeLog("SOCKET SERVER: window size row: %d, col: %d", window_size[0], window_size[1]);
+    writeLog("SOCKET SERVER: client window size row: %d, col: %d", window_size[0], window_size[1]);
 
     ///////////// socket client code /////////////////
     // create the socket of the client
