@@ -90,8 +90,7 @@ int main(int argc, char *argv[]){
     socket_info[strcspn(socket_info, "\n")] = 0;
     int Wret;
     if((Wret = write(info_pipe[1], socket_info, strlen(socket_info))) < 0){
-        perror("write in rule_print");
-        exit(1);
+        error("write of soket info in rule_print");
     }
 
     writeLog("controllo per valori inviati: %d, %s", Wret, socket_info);

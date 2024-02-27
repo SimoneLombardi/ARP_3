@@ -67,7 +67,7 @@ void serverHandlingFunction(int newsock_fd, double window_size[])
     {
         error("socket_server: serverHandlingFunction read echo window_size");
     }
-    printf("socket_server, serverHandlingFunctionttttttttttttt");
+    printf("socket_server, serverHandlingFunctionttttttttttttt\n");
     fflush(stdout);
 
 }
@@ -262,7 +262,7 @@ void client(int port_no_cli, char *string_ip, char *client_ID, int fd_obst_or_ta
     {
         error("socket_server: write in socket");
     }
-    printf("%s: %s -- echo", client_ID, echo);
+    printf("%s: %s -- echo\n", client_ID, echo);
 
     // read the window size from server
     n = read(sock_fd, buffer_rec, sizeof(buffer_rec));
@@ -270,7 +270,7 @@ void client(int port_no_cli, char *string_ip, char *client_ID, int fd_obst_or_ta
     {
         error("socket_server: read from socket");
     }
-    printf("read window size %s: %s", client_ID, buffer_rec);
+    printf("read window size %s: %s\n", client_ID, buffer_rec);
 
     // send the window size as echo to server
     n = write(sock_fd, buffer_rec, sizeof(buffer_rec));
@@ -280,7 +280,7 @@ void client(int port_no_cli, char *string_ip, char *client_ID, int fd_obst_or_ta
     }
     // convert dimension window in double
     sscanf(buffer_rec, "%lf,%lf", &window_size[0], &window_size[1]);
-    printf("window sizw converted in double %s: %f,%f", client_ID, window_size[0], window_size[1]);
+    printf("window sizw converted in double %s: %f,%f\n", client_ID, window_size[0], window_size[1]);
     fflush(stdout);
 
 
@@ -371,13 +371,15 @@ int main(int argc, char *argv[])
         char socket_info[100], string_ip[100], string_port_no[100], correct_str_port_no[100];
         int retVall, port_no_cli;
         int obst_pid, targ_pid;
+        int readRP_n;
 
         // recive the socket information from rule print
-        if ((read(fdrp_ss[0], socket_info, sizeof(socket_info)) < 0))
+        if ((readRP_n = read(fdrp_ss[0], socket_info, sizeof(socket_info)) < 0))
         {
             error("soket server: read fdrp_ss[0]");
         }
 
+        writeLog("SOCKET SERVER: read socket_info %d , %s", readRP_n, socket_info);
         retVall = string_parser(socket_info, string_ip, string_port_no);
 
         printf("== client : string_ip: %s\n", string_ip);
@@ -416,7 +418,7 @@ int main(int argc, char *argv[])
     else
     {
         // Parent process
-        server(fdrp_ss[0]);
+        server(fds_ss[0]);
     }
     return 0;
 }
