@@ -84,7 +84,8 @@ void server(int readFD_winSize)
     SAI serv_addr, cli_addr;
 
     // server variable
-    double window_size[2]; //[row, col]
+    int int_window_size[2]; //[row, col]
+    
 
     if ((sock_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
     {
@@ -126,11 +127,14 @@ void server(int readFD_winSize)
     cli_len = sizeof(cli_addr);
 
     // reciveing the window size
-    if (read(readFD_winSize, window_size, sizeof(int) * 2) < 0)
+    if (read(readFD_winSize, int_window_size, sizeof(int) * 2) < 0)
     {
         error("socket server: read fds_ss[0]");
     }
-    writeLog("SOCKET SERVER: server window size row: %d, col: %d", window_size[0], window_size[1]);
+    writeLog("SOCKET SERVER: server window size row: %d, col: %d", int_window_size[0], int_window_size[1]);
+
+    // cast window size to double
+    double window_size[2] = {(double)int_window_size[0], (double)int_window_size[1]};
 
     printf("== server : Local IP: %s\n", inet_ntoa(serv_addr.sin_addr));
     printf("== server : Local Port: %d\n", ntohs(serv_addr.sin_port));
