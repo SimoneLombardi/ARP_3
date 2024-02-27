@@ -27,16 +27,48 @@
 int string_parser(char *string, char *first_arg, char *second_arg);
 
 // function called after acept in server
-void serverHandlingFunction(int newsock_fd)
+void serverHandlingFunction(int newsock_fd, double window_size[])
 {
     // buffer for communication
     char buffer_send[MAX_MSG_LENGHT];
     char buffer_rec[MAX_MSG_LENGHT];
     char echo[MAX_MSG_LENGHT];
+    char client_id[MAX_MSG_LENGHT];
     int n;
 
     // inizialization communication
-    
+    // read client_id (OI or TI)
+    n = read(newsock_fd, buffer_rec, sizeof(buffer_rec));
+    if (n == -1)
+    {
+        error("socket_server: read serverHandlingFunction client_ID");
+    }
+    strcpy(client_id, buffer_rec);
+    printf("socket_server, read client_id %s\n", client_id);
+    fflush(stdout);
+
+    // echo client_id
+    n = write(newsock_fd, client_id, sizeof(client_id));
+    if (n == -1)
+    {
+        error("socket_server: write (echo) serverHandlingFunction client_ID");
+    }
+    // convert double window_size in string
+    sprintf(buffer_send, "%.3f,%.3f", window_size[0], window_size[1]);
+    // write window size to socket
+    n = write(newsock_fd, buffer_send, sizeof(buffer_send));
+    if (n == -1)
+    {
+        error("socket_server, serverHandlingFunction write window_size");
+    }
+    // read the echo of window size
+    n = read(newsock_fd, echo, sizeof(buffer_rec));
+    if (n == -1)
+    {
+        error("socket_server: serverHandlingFunction read echo window_size");
+    }
+    printf("socket_server, serverHandlingFunctionttttttttttttt");
+    fflush(stdout);
 
 }
 
@@ -52,7 +84,7 @@ void server(int readFD_winSize)
     SAI serv_addr, cli_addr;
 
     // server variable
-    int window_size[2]; //[row, col]
+    double window_size[2]; //[row, col]
 
     if ((sock_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
     {
@@ -139,7 +171,7 @@ void server(int readFD_winSize)
         if (pid == 0)
         {
             closeAndLog(sock_fd, "socket_server close sock_fd");
-            serverHandlingFunction(newsock_fd);
+            serverHandlingFunction(newsock_fd, window_size);
         }
     }
     ////////////////////////
@@ -247,8 +279,10 @@ void client(int port_no_cli, char *string_ip, char *client_ID, int fd_obst_or_ta
         error("socket_server: write in socket");
     }
     // convert dimension window in double
-    sscanf(buffer_rec, "%.3f,%.3f", &window_size[0], &window_size[1]);
+    sscanf(buffer_rec, "%lf,%lf", &window_size[0], &window_size[1]);
     printf("window sizw converted in double %s: %f,%f", client_ID, window_size[0], window_size[1]);
+    fflush(stdout);
+
 
     exit(EXIT_SUCCESS);
 }
