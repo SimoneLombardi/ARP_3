@@ -1,2 +1,2 @@
-logfile.txt
-bin/
+log/logfile.txt
+bin/*
