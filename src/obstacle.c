@@ -94,10 +94,6 @@ int main(int argc, char *argv[])
         {
             error("obstacle: error write fdo_s[1]");
         }
-        else
-        {
-            writeLog("/// OBSTACLE: controllo byte scritti: %d", retVal_write);
-        }
         // generate obstacle every N seconds; implement a non-blocking timer to avoid problems with signals
         time_t t2 = time(NULL);
         while ((t2 - t) < N)

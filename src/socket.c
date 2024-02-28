@@ -69,7 +69,6 @@ void serverHandlingFunction(int newsock_fd, double window_size[])
     }
     printf("socket_server, serverHandlingFunctionttttttttttttt\n");
     fflush(stdout);
-
 }
 
 void server(int readFD_winSize)
@@ -85,7 +84,6 @@ void server(int readFD_winSize)
 
     // server variable
     int int_window_size[2]; //[row, col]
-    
 
     if ((sock_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
     {
@@ -117,11 +115,11 @@ void server(int readFD_winSize)
     listen_ret = listen(sock_fd, 5);
     if (listen_ret < 0)
     {
-        error("sever: fd not listening");
+        error("socket_sever_server: fd not listening");
     }
     else
     {
-        printf("== server : fd listening, success\n");
+        printf("== socket_server : fd listening, success\n");
     }
 
     cli_len = sizeof(cli_addr);
@@ -174,14 +172,46 @@ void server(int readFD_winSize)
         }
         if (pid == 0)
         {
-            closeAndLog(sock_fd, "socket_server close sock_fd");
+            // close the socket file descriptor
+            if(close(sock_fd) == -1){
+                error("socket_server_server, close sock_fd");
+            }
+            //  function with oparations socket need to do
             serverHandlingFunction(newsock_fd, window_size);
         }
     }
     ////////////////////////
 }
 
-void client(int port_no_cli, char *string_ip, char *client_ID, int fd_obst_or_targ)
+void data_conversion(char string_mat[][256], double reading_set[][2], int lenght)
+{
+    for (int i = 0; i < lenght; i++)
+    {
+        sprintf(string_mat[i], "%.3f,%.3f", reading_set[i][0], reading_set[i][1]);
+        // save positon in a string in the form (y | x)
+    }
+}
+
+void data_organizer(char string_mat[][256], char send_string[MAX_MSG_LENGHT], int lenght, char *client_id)
+{
+    char header[30];
+
+    sprintf(header, "%c[%d]", client_id[0], lenght);
+
+    // insert the number of obj in the head of the message
+    strcat(send_string, header);
+    // insert item coords and pipe in the send sendstring
+    for (int i = 0; i < lenght; i++)
+    {
+        strcat(send_string, string_mat[i]);
+        if (i < (lenght - 1))
+        { // avoid add a pipe after the last element
+            strcat(send_string, "|");
+        }
+    }
+}
+
+void client(int port_no_cli, char *string_ip, char *client_ID, int reading_pipe, int lenght)
 {
     int n;
     int sock_fd;
@@ -287,6 +317,61 @@ void client(int port_no_cli, char *string_ip, char *client_ID, int fd_obst_or_ta
     printf("window sizw converted in double %s: %f,%f\n", client_ID, window_size[0], window_size[1]);
     fflush(stdout);
 
+    // variable for select
+    int retVal_sel;
+    int retVal_read;
+    fd_set read_fd;
+    struct timeval time_sel;
+
+    // variable for store the object or target
+    double reading_set[lenght][2];
+    char string_mat[lenght][256];
+
+    // while for send data
+    while (1)
+    {
+        FD_ZERO(&read_fd);
+        FD_SET(reading_pipe, &read_fd);
+
+        // time interval for select
+        time_sel.tv_sec = 0;
+        time_sel.tv_usec = 3000;
+        // do-while statement for avoid problem with signals
+        do
+        {
+            // select for avoid
+            retVal_sel = select(reading_pipe + 1, &read_fd, NULL, NULL, &time_sel);
+        } while (retVal_sel == -1 && errno == EINTR);
+        // select for check the value
+        if (retVal_sel == -1)
+        {
+            error("socket_server: select ");
+        }
+        // if select has data, read from pipe
+        else if (retVal_sel > 0)
+        {
+            do
+            {
+                retVal_read = read(reading_pipe, reading_set, sizeof(double) * lenght * 2);
+            } while (retVal_read == -1 && errno == EINTR);
+            // general write error
+            if (retVal_read < 0)
+            {
+                error("socket_server: error read reading_pipe");
+            }
+            // function for formattin gin correct way the item to send in format O/T[X]xxx.xxx|xxx,xxx ....
+            data_conversion(string_mat, reading_set, lenght);
+            data_organizer(string_mat, buffer_send, lenght, client_ID);
+            // write data formatted into socket
+            n = write(sock_fd, buffer_send, sizeof(buffer_send));
+            if (n == -1)
+            {
+                error("socket_server: write sock_fd item data");
+            }
+            printf("%s\n", buffer_send);
+            fflush(stdout);
+        }
+    }
 
     exit(EXIT_SUCCESS);
 }
@@ -337,12 +422,12 @@ int main(int argc, char *argv[])
     // socket server --> server/ target/
     fdss_s_t[0] = fd_unpack[3][0];
     fdss_s_t[1] = fd_unpack[3][1];
-    closeAndLog(fdss_s_t[0], "socket server: close fdss_s_t[0]");
+    closeAndLog(fdss_s_t[0], "socket_server: close fdss_s_t[0]");
 
     // socket server --> server/ obstacle
     fdss_s_o[0] = fd_unpack[4][0];
     fdss_s_o[1] = fd_unpack[4][1];
-    closeAndLog(fdss_s_o[0], "socket server: close fdss_s_o[0]");
+    closeAndLog(fdss_s_o[0], "socket_server: close fdss_s_o[0]");
 
     // server --> socket server/window size
     fds_ss[0] = fd_unpack[5][0];
@@ -380,10 +465,10 @@ int main(int argc, char *argv[])
         // recive the socket information from rule print
         if ((readRP_n = read(fdrp_ss[0], socket_info, sizeof(socket_info)) < 0))
         {
-            error("soket server: read fdrp_ss[0]");
+            error("soket_server: read fdrp_ss[0]");
         }
 
-        writeLog("SOCKET SERVER: read socket_info %d , %s", readRP_n, socket_info);
+        writeLog("socket_server: read socket_info %d , %s", readRP_n, socket_info);
         retVall = string_parser(socket_info, string_ip, string_port_no);
 
         printf("== client : string_ip: %s\n", string_ip);
@@ -397,7 +482,7 @@ int main(int argc, char *argv[])
         obst_pid = fork();
         if (obst_pid < 0)
         {
-            error("SOCKET SERVER, client: fork obstacle client");
+            error("socket_server, client: fork obstacle client");
         }
         if (obst_pid != 0)
         {
@@ -405,18 +490,18 @@ int main(int argc, char *argv[])
             targ_pid = fork();
             if (targ_pid < 0)
             {
-                error("SOCKET SERVER, client: fork targhet client");
+                error("socket_server, client: fork targhet client");
             }
         }
         if (obst_pid == 0)
         {
             // inisied client process for obstacle
-            client(port_no_cli, string_ip, "OI", fdss_s_o[0]);
+            client(port_no_cli, string_ip, "OI", fdo_s[0], MAX_OBST_ARR_SIZE);
         }
         if (targ_pid == 0 && obst_pid != 0)
         {
             // inisied client process for targhet
-            client(port_no_cli, string_ip, "TI", fdss_s_t[0]);
+            client(port_no_cli, string_ip, "TI", fdt_s[0], MAX_TARG_ARR_SIZE);
         }
     }
     else
