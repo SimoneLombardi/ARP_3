@@ -62,13 +62,24 @@ void serverHandlingFunction(int newsock_fd, double window_size[])
         error("socket_server, serverHandlingFunction write window_size");
     }
     // read the echo of window size
-    n = read(newsock_fd, echo, sizeof(buffer_rec));
+    n = read(newsock_fd, echo, sizeof(echo));
     if (n == -1)
     {
         error("socket_server: serverHandlingFunction read echo window_size");
     }
     printf("socket_server, serverHandlingFunctionttttttttttttt\n");
     fflush(stdout);
+
+    n = read(newsock_fd, buffer_rec, sizeof(buffer_rec));
+    if (n == -1)
+    {
+        error("socket_server: serverHandlingFunction read echo window_size");
+    }
+    printf("socket_server, received %s\n", buffer_rec);
+    fflush(stdout);
+
+
+
 }
 
 void server(int readFD_winSize)
@@ -173,9 +184,9 @@ void server(int readFD_winSize)
         if (pid == 0)
         {
             // close the socket file descriptor
-            if(close(sock_fd) == -1){
-                error("socket_server_server, close sock_fd");
-            }
+            //if(close(sock_fd) == -1){
+            //    error("socket_server_server, close sock_fd");
+            //}
             //  function with oparations socket need to do
             serverHandlingFunction(newsock_fd, window_size);
         }
@@ -189,15 +200,17 @@ void data_conversion(char string_mat[][256], double reading_set[][2], int lenght
     {
         sprintf(string_mat[i], "%.3f,%.3f", reading_set[i][0], reading_set[i][1]);
         // save positon in a string in the form (y | x)
+        printf("funzione data_conversion %s\n", string_mat[i]);
+
     }
 }
 
-void data_organizer(char string_mat[][256], char send_string[MAX_MSG_LENGHT], int lenght, char *client_id)
+void data_organizer(char string_mat[][256], char send_string[], int lenght, char *client_id)
 {
     char header[30];
 
     sprintf(header, "%c[%d]", client_id[0], lenght);
-
+    printf("funzione data_organizer %s\n", header);
     // insert the number of obj in the head of the message
     strcat(send_string, header);
     // insert item coords and pipe in the send sendstring
@@ -208,7 +221,10 @@ void data_organizer(char string_mat[][256], char send_string[MAX_MSG_LENGHT], in
         { // avoid add a pipe after the last element
             strcat(send_string, "|");
         }
+        printf("funzione data_organizer string_mat %s\n", string_mat[i]);
     }
+    printf("funzione data_organizer send_string %s\n\n", send_string);
+
 }
 
 void client(int port_no_cli, char *string_ip, char *client_ID, int reading_pipe, int lenght)
@@ -224,7 +240,7 @@ void client(int port_no_cli, char *string_ip, char *client_ID, int reading_pipe,
     HE *server;
 
     // comunicatioN variable
-    char buffer_send[MAX_MSG_LENGHT]; // for send the data converted in string
+    char buffer_send[MAX_OBST_ARR_SIZE]; // for send the data converted in string
     char buffer_rec[MAX_MSG_LENGHT];  // write the received data in string
     char echo[MAX_MSG_LENGHT];
     double window_size[2]; //[row, col]
@@ -324,8 +340,8 @@ void client(int port_no_cli, char *string_ip, char *client_ID, int reading_pipe,
     struct timeval time_sel;
 
     // variable for store the object or target
-    double reading_set[lenght][2];
-    char string_mat[lenght][256];
+    double reading_set[MAX_MSG_LENGHT][2];
+    char string_mat[MAX_MSG_LENGHT][256];
 
     // while for send data
     while (1)
@@ -368,7 +384,7 @@ void client(int port_no_cli, char *string_ip, char *client_ID, int reading_pipe,
             {
                 error("socket_server: write sock_fd item data");
             }
-            printf("%s\n", buffer_send);
+            printf("client buffer send %s\n\n", buffer_send);
             fflush(stdout);
         }
     }
