@@ -29,11 +29,6 @@ int string_parser(char *string, char *first_arg, char *second_arg);
 // function called after acept in server
 void serverHandlingFunction(int newsock_fd, double window_size[])
 {
-    // controllo attivazione processi
-    printf(" --- %d ---\n", getpid());
-    sleep(10);
-
-    
     // buffer for communication
     char buffer_send[MAX_MSG_LENGHT];
     char buffer_rec[MAX_MSG_LENGHT];
@@ -50,7 +45,7 @@ void serverHandlingFunction(int newsock_fd, double window_size[])
         error("socket_server: read serverHandlingFunction client_ID");
     }
     strcpy(client_id, buffer_rec);
-    printf("### SS, ServHandFunc read client_id %s\n", client_id);
+    printf("#### SS, ServHandFunc read client_id %s\n", client_id);
     fflush(stdout);
 
     // echo client_id
@@ -83,10 +78,8 @@ void serverHandlingFunction(int newsock_fd, double window_size[])
     {
         error("socket_server: serverHandlingFunction read buffer");
     }
-    printf("### SS, ServHandFunc received: %s\n\n", buffer_rec);
+    printf("#### SS, ServHandFunc received: %s\n\n", buffer_rec);
     fflush(stdout);
-
-    
 }
 
 void server(int readFD_winSize)
@@ -177,8 +170,8 @@ void server(int readFD_winSize)
             if (newsock_fd < 0)
             {
                 error("socket server: error on accept");
-                printf("== server : Remote IP: %s\n", inet_ntoa(cli_addr.sin_addr));
-                printf("== server : Remote Port: %d\n", ntohs(cli_addr.sin_port));
+                printf("=== server : Remote IP: %s\n", inet_ntoa(cli_addr.sin_addr));
+                printf("=== server : Remote Port: %d\n", ntohs(cli_addr.sin_port));
                 fflush(stdout);
             }
             else
@@ -200,6 +193,7 @@ void server(int readFD_winSize)
             //}
             //  function with oparations socket need to do
             serverHandlingFunction(newsock_fd, window_size);
+            exit(EXIT_SUCCESS);
         }
     }
     ////////////////////////
@@ -213,13 +207,15 @@ void data_conversion(char string_mat[][256], double reading_set[][2], int lenght
         // save positon in a string in the form (y | x)
     }
 
-    printf("data CONVERTED to string --> ");
-    for (int i = 0; i < lenght; i++)
+    /*
+    printf("/// data CONVERTED to string --> ");
+    for (int i = 0; i < lenght/2; i++)
     {
         printf("%s --", string_mat[i]);
     }
     printf("\n\n");
     fflush(stdout);
+    */
     
 }
 
@@ -240,7 +236,7 @@ void data_organizer(char string_mat[][256], char send_string[], int lenght, char
             strcat(send_string, "|");
         }
     }
-    printf("//%s// data ORGANIZER payload --> %s\n\n", client_id, send_string);
+    //printf("/// %s: data ORGANIZER payload --> %s\n\n", client_id, send_string);
 }
 
 void client(int port_no_cli, char *string_ip, char *client_ID, int reading_pipe, int lenght)
@@ -328,7 +324,7 @@ void client(int port_no_cli, char *string_ip, char *client_ID, int reading_pipe,
     {
         error("socket_server: write in socket");
     }
-    printf("// %s: %s -- client id echo\n", client_ID, echo);
+    printf("/// %s: %s -- client id echo\n", client_ID, echo);
 
     // read the window size from server
     bzero(buffer_rec, MAX_MSG_LENGHT);
@@ -337,7 +333,7 @@ void client(int port_no_cli, char *string_ip, char *client_ID, int reading_pipe,
     {
         error("socket_server: read from socket");
     }
-    printf("// %s: %s -- window size\n", client_ID, buffer_rec);
+    printf("/// %s: %s -- window size\n", client_ID, buffer_rec);
 
     // send the window size as echo to server
     n = write(sock_fd, buffer_rec, sizeof(buffer_rec));
@@ -347,7 +343,7 @@ void client(int port_no_cli, char *string_ip, char *client_ID, int reading_pipe,
     }
     // convert dimension window in double
     sscanf(buffer_rec, "%lf,%lf", &window_size[0], &window_size[1]);
-    printf("// %s: %f,%f -- window size (double)\n", client_ID, window_size[0], window_size[1]);
+    printf("/// %s: %f,%f -- window size (double)\n", client_ID, window_size[0], window_size[1]);
     fflush(stdout);
 
     // variable for select
@@ -410,7 +406,7 @@ void client(int port_no_cli, char *string_ip, char *client_ID, int reading_pipe,
             {
                 error("socket_server: write sock_fd item data");
             }
-            printf("// %s (generated / organized) output: %d -- %s\n\n", client_ID, n, buffer_send);
+            printf("/// %s output: %d -- %s\n\n", client_ID, n, buffer_send);
             fflush(stdout);
 
             bzero(buffer_send, MAX_MSG_LENGHT);
