@@ -29,6 +29,11 @@ int string_parser(char *string, char *first_arg, char *second_arg);
 // function called after acept in server
 void serverHandlingFunction(int newsock_fd, double window_size[])
 {
+    // controllo attivazione processi
+    printf(" --- %d ---\n", getpid());
+    sleep(10);
+
+    
     // buffer for communication
     char buffer_send[MAX_MSG_LENGHT];
     char buffer_rec[MAX_MSG_LENGHT];
@@ -38,6 +43,7 @@ void serverHandlingFunction(int newsock_fd, double window_size[])
 
     // inizialization communication
     // read client_id (OI or TI)
+    bzero(buffer_rec, MAX_MSG_LENGHT);
     n = read(newsock_fd, buffer_rec, sizeof(buffer_rec));
     if (n == -1)
     {
@@ -47,8 +53,6 @@ void serverHandlingFunction(int newsock_fd, double window_size[])
     printf("### SS, ServHandFunc read client_id %s\n", client_id);
     fflush(stdout);
 
-    bzero(buffer_rec, MAX_MSG_LENGHT);
-
     // echo client_id
     n = write(newsock_fd, client_id, sizeof(client_id));
     if (n == -1)
@@ -56,6 +60,7 @@ void serverHandlingFunction(int newsock_fd, double window_size[])
         error("socket_server: write (echo) serverHandlingFunction client_ID");
     }
     // convert double window_size in string
+    bzero(buffer_send, MAX_MSG_LENGHT);
     sprintf(buffer_send, "%.3f,%.3f", window_size[0], window_size[1]);
     // write window size to socket
     n = write(newsock_fd, buffer_send, sizeof(buffer_send));
@@ -64,17 +69,15 @@ void serverHandlingFunction(int newsock_fd, double window_size[])
         error("socket_server, serverHandlingFunction write window_size");
     }
 
-    bzero(buffer_send, MAX_MSG_LENGHT);
-
     // read the echo of window size
+    bzero(echo, MAX_MSG_LENGHT);
     n = read(newsock_fd, echo, sizeof(echo));
     if (n == -1)
     {
         error("socket_server: serverHandlingFunction read echo window_size");
     }
 
-    bzero(echo, MAX_MSG_LENGHT);
-
+    bzero(buffer_rec, MAX_MSG_LENGHT);
     n = read(newsock_fd, buffer_rec, sizeof(buffer_rec));
     if (n == -1)
     {
@@ -83,7 +86,7 @@ void serverHandlingFunction(int newsock_fd, double window_size[])
     printf("### SS, ServHandFunc received: %s\n\n", buffer_rec);
     fflush(stdout);
 
-    bzero(buffer_rec, MAX_MSG_LENGHT);
+    
 }
 
 void server(int readFD_winSize)
@@ -210,8 +213,7 @@ void data_conversion(char string_mat[][256], double reading_set[][2], int lenght
         // save positon in a string in the form (y | x)
     }
 
-    printf("data CONVERTED to string -->\n");
-
+    printf("data CONVERTED to string --> ");
     for (int i = 0; i < lenght; i++)
     {
         printf("%s --", string_mat[i]);
@@ -224,9 +226,9 @@ void data_conversion(char string_mat[][256], double reading_set[][2], int lenght
 void data_organizer(char string_mat[][256], char send_string[], int lenght, char *client_id)
 {
     char header[30];
+    bzero(send_string, MAX_MSG_LENGHT);
 
     sprintf(header, "%c[%d]", client_id[0], lenght);
-    printf("data ORGANIZER head --> %s\n", header);
     // insert the number of obj in the head of the message
     strcat(send_string, header);
     // insert item coords and pipe in the send sendstring
@@ -238,7 +240,7 @@ void data_organizer(char string_mat[][256], char send_string[], int lenght, char
             strcat(send_string, "|");
         }
     }
-    printf("data ORGANIZER payload --> %s\n\n", send_string);
+    printf("//%s// data ORGANIZER payload --> %s\n\n", client_id, send_string);
 }
 
 void client(int port_no_cli, char *string_ip, char *client_ID, int reading_pipe, int lenght)
@@ -281,17 +283,17 @@ void client(int port_no_cli, char *string_ip, char *client_ID, int reading_pipe,
     bcopy((char *)server->h_addr, (char *)&server_address.sin_addr.s_addr, server->h_length);
     server_address.sin_port = htons(port_no_cli);
 
-    printf("== client : Local IP: %s\n", inet_ntoa(server_address.sin_addr));
-    printf("== client : Remote IP: %s\n", inet_ntoa(server_address.sin_addr));
+    //printf("== client : Local IP: %s\n", inet_ntoa(server_address.sin_addr));
+    //printf("== client : Remote IP: %s\n", inet_ntoa(server_address.sin_addr));
 
-    printf("== client : port_no_cli: %d\n", port_no_cli);
-    printf("== client : Remote Port: %d\n", ntohs(server_address.sin_port));
+    //printf("== client : port_no_cli: %d\n", port_no_cli);
+    //printf("== client : Remote Port: %d\n", ntohs(server_address.sin_port));
 
-    printf("== client : Host name: %s\n", server->h_name);
-    printf("== client : Host address type: %d\n", server->h_addrtype);
-    printf("== client : Length: %d\n", server->h_length);
-    printf("== client : Host address: %s\n", inet_ntoa(*(struct in_addr *)server->h_addr));
-    fflush(stdout);
+    //printf("== client : Host name: %s\n", server->h_name);
+    //printf("== client : Host address type: %d\n", server->h_addrtype);
+    //printf("== client : Length: %d\n", server->h_length);
+    //printf("== client : Host address: %s\n", inet_ntoa(*(struct in_addr *)server->h_addr));
+    //fflush(stdout);
 
     // start communication with the server
     do
@@ -391,12 +393,14 @@ void client(int port_no_cli, char *string_ip, char *client_ID, int reading_pipe,
                 error("socket_server: error read reading_pipe");
             }
             // function for formattin gin correct way the item to send in format O/T[X]xxx.xxx|xxx,xxx ....
+            /*
             printf("// %s: controllo reading_set\n", client_ID);
             for(int i = 0; i < lenght; i++){
                 printf("// %f,%f ", reading_set[i][0], reading_set[i][1]);
             }
             printf("\n");
             fflush(stdout);
+            */
             
             data_conversion(string_mat, reading_set, lenght);
             data_organizer(string_mat, buffer_send, lenght, client_ID);
@@ -406,7 +410,7 @@ void client(int port_no_cli, char *string_ip, char *client_ID, int reading_pipe,
             {
                 error("socket_server: write sock_fd item data");
             }
-            printf("// %s (generated / organized) output: %d -- %s\n\n",client_ID, n, buffer_send);
+            printf("// %s (generated / organized) output: %d -- %s\n\n", client_ID, n, buffer_send);
             fflush(stdout);
 
             bzero(buffer_send, MAX_MSG_LENGHT);
@@ -516,7 +520,7 @@ int main(int argc, char *argv[])
         fflush(stdout);
 
         port_no_cli = atoi(string_port_no);
-        printf("== client : port_no_cli (after atoi) %d\n", port_no_cli);
+        //printf("== client : port_no_cli (after atoi) %d\n", port_no_cli);
 
         // create a process for obstacle and one for targhet
         obst_pid = fork();
