@@ -518,7 +518,7 @@ int main(int argc, char *argv[])
         port_no_cli = atoi(string_port_no);
         //printf("== client : port_no_cli (after atoi) %d\n", port_no_cli);
 
-        // create a process for obstacle and one for targhet
+        // create a process for obstacle and one for targsocketet
         obst_pid = fork();
         if (obst_pid < 0)
         {
