@@ -8,7 +8,7 @@
 //----- def for server -----//
 #define DRONE_ICON 'X'
 #define MAX_OBST_ARR_SIZE 20 // parameter also for for obstacle process
-#define MAX_TARG_ARR_SIZE 10 // parameter also for the target process
+#define MAX_TARG_ARR_SIZE 20 // parameter also for the target process
 // big circle for the repulsive force near the obstacle
 #define OBST_RADIUS_FAR 3
 // smlcircle for the repulsive force near the obstacle
@@ -29,12 +29,15 @@
 #define CYCLE 1
 
 //----- def for target -----//
+#define TARGET_NUMBER 10
 #define WIND_NUMBER 12
 #define LIMIT 5
+
 
 //----- def for obstacle -----//
 // Seconds of upgrade of the obstacles
 #define N 5
+#define OBSTACLES_NUMBER 20
 
 //----- def for socket_server -----//
 #define SAI struct sockaddr_in

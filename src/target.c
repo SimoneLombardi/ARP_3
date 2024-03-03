@@ -70,8 +70,8 @@ int main(int argc, char *argv[])
     double set_of_target[MAX_TARG_ARR_SIZE][2];
     for (int i = 0; i < MAX_TARG_ARR_SIZE; i++)
     {
-        set_of_target[i][0] = ((double)rand() / RAND_MAX) - 0.5;
-        set_of_target[i][1] = ((double)rand() / RAND_MAX) - 0.5;
+        set_of_target[i][0] = ((double)rand() / RAND_MAX);
+        set_of_target[i][1] = ((double)rand() / RAND_MAX);
     }
 
     // define write retVal

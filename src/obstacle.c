@@ -80,8 +80,8 @@ int main(int argc, char *argv[])
         time_t t = time(NULL);
         for (i = 0; i < MAX_OBST_ARR_SIZE; i++)
         {
-            set_of_obstacle[i][0] = (double)rand() / RAND_MAX - 0.5;
-            set_of_obstacle[i][1] = (double)rand() / RAND_MAX - 0.5;
+            set_of_obstacle[i][0] = (double)rand() / RAND_MAX;
+            set_of_obstacle[i][1] = (double)rand() / RAND_MAX;
         }
 
         // avoid system call interruption by signal

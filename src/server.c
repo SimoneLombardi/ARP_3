@@ -237,8 +237,8 @@ int main(int argc, char *argv[])
     // The obstacle are between -1 and 1
     for (i = 0; i < MAX_TARG_ARR_SIZE; i++)
     {
-        int_set_of_target[i][0] = (int)(set_of_target[i][0] * spawn_Col);
-        int_set_of_target[i][1] = (int)(set_of_target[i][1] * spawn_Row);
+        int_set_of_target[i][0] = (int)((set_of_target[i][0] - 0.5) * spawn_Col);
+        int_set_of_target[i][1] = (int)((set_of_target[i][1] - 0.5) * spawn_Row);
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -318,8 +318,8 @@ int main(int argc, char *argv[])
                             // moltiply the obstacle for the windows size --> get int position of obstacle
                             for (i = 0; i < MAX_OBST_ARR_SIZE; i++)
                             {
-                                int_set_of_obstacle[i][0] = (int)(set_of_obstacle[i][0] * spawn_Col);
-                                int_set_of_obstacle[i][1] = (int)(set_of_obstacle[i][1] * spawn_Row);
+                                int_set_of_obstacle[i][0] = (int)((set_of_obstacle[i][0] - 0.5) * spawn_Col);
+                                int_set_of_obstacle[i][1] = (int)((set_of_obstacle[i][1] - 0.5) * spawn_Row);
                             }
                             new_obstacles = 1; // set the flag for print the map
                         }
