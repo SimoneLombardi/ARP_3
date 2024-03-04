@@ -32,8 +32,16 @@ int main(int argc, char *argv[])
 
     pid_t wd_pid = getpid();
     // write into logfile
+
+    // Open the log file for cancel the content
+    FILE *logfile = fopen("../log/logfile_wd.txt", "w");
+    if (logfile == NULL)
+    {
+        error("error opening logfile_wd");
+    }
+    
     writeLog_wd("WATCHDOG is create with pid %d ", wd_pid);
-    writeLog_wd("WATCHDOG is create with pid %d ", wd_pid);
+    writeLog("WATCHDOG is create with pid %d ", wd_pid);
     // In this array I will put all the proces pid converted in int
     int num_ps = PROCESS_NUMBER;
     pid_t pids_from_master[num_ps];

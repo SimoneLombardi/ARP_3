@@ -44,18 +44,7 @@ int main()
     { // if problem opening file, send error
         error("master: fopen logfile");
     }
-    else
-    {
-        // wtite in logfile
-        time_t current_time;
-        // obtain local time
-        time(&current_time);
-        fprintf(logfile, "=> create MASTER with pid %d: %s ", getpid(), ctime(&current_time));
-        if (fclose(logfile) < 0)
-        {
-            error("master: fclose logfile");
-        }
-    }
+    writeLog("MASTER is create with pid %d ", getpid());
 
     // manage pipe------------------------------------------------------------------------
     // Pipe for comommunication between server -> master for send back the pid
@@ -175,11 +164,15 @@ int main()
     writeLog("MASTER to obstacle         fdo_s:     %d,%d", fdo_s[0], fdo_s[1]);
     writeLog("MASTER to rule             rule_pipe: %d,%d,  fdrp_ss: %d,%d", rule_pipe[0], rule_pipe[1], fdrp_ss[0], fdrp_ss[1]);
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //              SPAWN PROCESS                                                                                                             //
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     //--- SOCKET SERVER process -------------------------------------------------------------------------------------------------
     // char *arg_list_socket_server_1[] = {"konsole", "-e", "./socket_server", first_arg, str_fd7[0], str_fd7[1], str_fdt_s[0], str_fdt_s[1], str_fdo_s[0], str_fdo_s[1], str_fdss_s_t[0], str_fdss_s_t[1], str_fdss_s_o[0], str_fdss_s_o[1], str_fds_ss[0], str_fds_ss[1], NULL};
-    char *arg_list_socket[] = {"konsole", "-e", "./socket", str_fd7[0], str_fd7[1], str_fdt_s[0], str_fdt_s[1], str_fdo_s[0], str_fdo_s[1], str_fdss_s_t[0], str_fdss_s_t[1], str_fdss_s_o[0], str_fdss_s_o[1], str_fds_ss[0], str_fds_ss[1], str_fdrp_ss[0], str_fdrp_ss[1], NULL};
+    char *arg_list_socket[] = {"./socket", str_fd7[0], str_fd7[1], str_fdt_s[0], str_fdt_s[1], str_fdo_s[0], str_fdo_s[1], str_fdss_s_t[0], str_fdss_s_t[1], str_fdss_s_o[0], str_fdss_s_o[1], str_fds_ss[0], str_fds_ss[1], str_fdrp_ss[0], str_fdrp_ss[1], NULL};
 
-    child_pids[5] = spawn("konsole", arg_list_socket);
+    child_pids[5] = spawn("./socket", arg_list_socket);
     // printf("first_arg: %s\n\n\n", first_arg);
 
     writeLog("MASTER spawn socket server with pid: %d ", child_pids[5]);
@@ -266,6 +259,9 @@ int main()
     writeLog("MASTER spawn WATCHDOG with pid: %d ", child_pids[num_ps]);
     // The master will wait until all the process will terminate
 
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                  WAIT FOR THE PID OF THE SON                                                                         //
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     pid_t waitResult;
     int status;
     for (i = 0; i <= num_ps; i++)
@@ -278,11 +274,13 @@ int main()
         }
         if (WIFEXITED(status))
         {
+            writeLog("Process %d is termined with status %d\n", i, WEXITSTATUS(status));
             printf("Process %d is termined with status %d\n", i, WEXITSTATUS(status));
             fflush(stdout);
         }
         else
         {
+            writeLog("Process %d is termined with anomaly\n", i);
             printf("Process %d is termined with anomaly\n", i);
             fflush(stdout);
         }

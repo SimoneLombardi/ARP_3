@@ -87,10 +87,6 @@ int main(int argc, char *argv[])
     {
         error("obstacle: error write fdt_s[1]");
     }
-    else
-    {
-        writeLog("/// TARGHET: controllo byte scritti: %d", retVal_write);
-    }
 
     while (1)
     {

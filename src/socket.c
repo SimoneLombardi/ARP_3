@@ -523,6 +523,13 @@ int main(int argc, char *argv[])
     // to have all the fd in the two processes
     pid_t socket_server = getpid();
     int i;
+    // Open the log file for cancel the content
+    FILE *logfile = fopen("../log/logfile_sock.txt", "w");
+    if (logfile == NULL)
+    {
+        error("error opening logfile_sock");
+    }
+
     writeLog("SOCKET SERVER created with pid %d ", socket_server);
     writeLog_sock("SOCKET SERVER created with pid %d ", socket_server);
 
