@@ -73,6 +73,96 @@ void writeLog(const char *format, ...)
     }
 }
 
+// function for write in logfile_sock
+void writeLog_sock(const char *format, ...)
+{
+    // Open the log file for appending
+    FILE *logfile = fopen("../log/logfile_sock.txt", "a");
+    if (logfile == NULL)
+    {
+        error("error opening logfile_sock");
+    }
+
+    // Initialize the variable argument list
+    va_list args;
+    va_start(args, format);
+
+    // Get the current time
+    time_t current_time;
+    time(&current_time);
+
+    // Get the local time structure
+    struct tm *local_time = localtime(&current_time);
+
+    // Get the current time in the format HH:MM:SS
+    char time_str[9];
+    strftime(time_str, sizeof(time_str), "%H:%M:%S", local_time);
+
+    // Print the time on a separate line
+    fprintf(logfile, "%s =>\t", time_str);
+
+    // Print the log message on a new line with a newline character
+    vfprintf(logfile, format, args);
+    fprintf(logfile, "\n");
+
+    // Clean up the variable argument list
+    va_end(args);
+
+    // Flush the file stream to ensure the message is written immediately
+    fflush(logfile);
+
+    // Close the log file, handle errors if closing fails
+    if (fclose(logfile) == -1)
+    {
+        error("fclose logfile_sock");
+    }
+}
+
+// function for write in logfile_wd
+void writeLog_wd(const char *format, ...)
+{
+    // Open the log file for appending
+    FILE *logfile = fopen("../log/logfile_wd.txt", "a");
+    if (logfile == NULL)
+    {
+        error("error opening logfile_wd");
+    }
+
+    // Initialize the variable argument list
+    va_list args;
+    va_start(args, format);
+
+    // Get the current time
+    time_t current_time;
+    time(&current_time);
+
+    // Get the local time structure
+    struct tm *local_time = localtime(&current_time);
+
+    // Get the current time in the format HH:MM:SS
+    char time_str[9];
+    strftime(time_str, sizeof(time_str), "%H:%M:%S", local_time);
+
+    // Print the time on a separate line
+    fprintf(logfile, "%s =>\t", time_str);
+
+    // Print the log message on a new line with a newline character
+    vfprintf(logfile, format, args);
+    fprintf(logfile, "\n");
+
+    // Clean up the variable argument list
+    va_end(args);
+
+    // Flush the file stream to ensure the message is written immediately
+    fflush(logfile);
+
+    // Close the log file, handle errors if closing fails
+    if (fclose(logfile) == -1)
+    {
+        error("fclose logfile_wd");
+    }
+}
+
 // return sign of arg X
 int sign(int x)
 {

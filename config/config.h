@@ -3,7 +3,7 @@
 #define CONFIG_H
 
 //----- def for mster -----//
-#define PROCESS_NUMBER 6;
+#define PROCESS_NUMBER 7;
 
 //----- def for server -----//
 #define DRONE_ICON 'X'

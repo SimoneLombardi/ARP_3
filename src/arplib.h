@@ -9,6 +9,10 @@ int spawn(const char *program, char **arg_list);
 
 void writeLog(const char *format, ...);
 
+void writeLog_sock(const char *format, ...);
+
+void writeLog_wd(const char *format, ...);
+
 int sign(int x);
 
 void create_pipe(int pipe_fd[], char string_pipe_fd[][20], char *descriptorName);

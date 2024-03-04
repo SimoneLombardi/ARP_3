@@ -27,6 +27,25 @@ int fd7[2], fdt_s[2], fdo_s[2], fdss_s_t[2], fdss_s_o[2], fds_ss[2], fdrp_ss[2];
 // server variable
 int int_window_size[2]; //[row, col]
 
+
+void sigusr1Handler(int signum, siginfo_t *info, void *context)
+{
+    if (signum == SIGUSR1)
+    {
+        /*send a signal SIGUSR2 to watchdog */
+        // printf("SERVER sig handler");
+        if (kill(info->si_pid, SIGUSR2) == 0)
+        {
+            writeLog("SOCKET SERVER: pid %d, received signal from wd pid: %d ", getpid(), info->si_pid);
+        }
+        else
+        {
+            error("target: kill SIGUSR2 ");
+        }
+    }
+}
+
+
 int string_parser(char *string, char *first_arg, char *second_arg);
 
 char parseMessage(const char message[], double array[20][2], int *array_size)
@@ -35,36 +54,35 @@ char parseMessage(const char message[], double array[20][2], int *array_size)
     char id;
     if (sscanf(msg, "%c[%d]", &id, array_size) != 2 || (id != 'O' && id != 'T'))
     {
-        printf("Failed to parse array size or invalid ID\n");
-        return;
+        writeLog_sock("Failed to parse array size or invalid ID");
+        
     }
 
     msg = strchr(msg, '|');
     if (!msg)
     {
-        printf("Failed to find start of data\n");
-        return;
+        writeLog_sock("Failed to find start of data");
     }
 
     for (int i = 0; i < *array_size; i++)
     {
         if (sscanf(msg, "|%lf,%lf", &array[i][0], &array[i][1]) != 2)
         {
-            printf("Failed to parse pair %d\n", i);
+            writeLog_sock("Failed to parse pair %d", i);
             return id;
         }
 
         msg = strchr(msg + 1, '|');
         if (!msg && i != *array_size - 1)
         {
-            printf("Failed to find separator after pair %d\n", i);
+            writeLog_sock("Failed to find separator after pair %d", i);
             return id;
         }
     }
     return id;
 }
 
-// function called after acept in server
+// function for the communication with the client
 void serverHandlingFunction(int newsock_fd, double window_size[])
 {
     // buffer for communication
@@ -84,19 +102,16 @@ void serverHandlingFunction(int newsock_fd, double window_size[])
         error("socket_server: read serverHandlingFunction client_ID");
     }
     strcpy(client_id, buffer_rec);
-    writeLog("SOCKET SERVER: serverHandlingFunction read client_ID %s", client_id);
-    printf("#### SS, ServHandFunc read client_id %s\n", client_id);
-    fflush(stdout);
-
+    writeLog_sock("SOCKET SERVER: serverHandlingFunction read client_ID %s", client_id);
+   
     // echo client_id
     n = write(newsock_fd, client_id, sizeof(client_id));
     if (n == -1)
     {
-        error("socket_server: write (echo) serverHandlingFunction client_ID");
+        error("socket_server: serverHandlingFunction write (echo) client_ID");
     }
-    writeLog("SOCKET SERVER: serverHandlingFunction write client_id as echo %s", client_id);
-    printf("#### SS, ServHandFunc write client_id as echo %s\n", client_id);
-    fflush(stdout);
+    writeLog_sock("SOCKET SERVER: serverHandlingFunction write echo client_id: %s", client_id);
+
     // convert double window_size in string
     bzero(buffer_send, MAX_MSG_LENGHT);
     sprintf(buffer_send, "%.3f,%.3f", window_size[0], window_size[1]);
@@ -106,9 +121,8 @@ void serverHandlingFunction(int newsock_fd, double window_size[])
     {
         error("socket_server, serverHandlingFunction write window_size");
     }
-    writeLog("SOCKET SERVER: serverHandlingFunction write window_size %s", buffer_send);
-    printf("#### SS, ServHandFunc send window_size to client %s\n", buffer_send);
-    fflush(stdout);
+    writeLog_sock("SOCKET SERVER: serverHandlingFunction write window_size: %s", buffer_send);
+   
     // read the echo of window size
     bzero(echo, MAX_MSG_LENGHT);
     n = read(newsock_fd, echo, sizeof(echo));
@@ -116,9 +130,8 @@ void serverHandlingFunction(int newsock_fd, double window_size[])
     {
         error("socket_server: serverHandlingFunction read echo window_size");
     }
-    writeLog("SOCKET SERVER: serverHandlingFunction read echo window_size %s", echo);
-    printf("#### SS, ServHandFunc read echo window_size %s\n", echo);
-    fflush(stdout);
+    writeLog_sock("SOCKET SERVER: serverHandlingFunction read echo window_size: %s", echo);
+   
     // while loop for the communication of target and obstacle
     while (1)
     {
@@ -131,33 +144,30 @@ void serverHandlingFunction(int newsock_fd, double window_size[])
         {
             error("socket_server: serverHandlingFunction read buffer");
         }
-        writeLog("SOCKET SERVER: serverHandlingFunction read %s", buffer_rec);
-        printf("#### SS, ServHandFunc read: %s\n\n", buffer_rec);
-        fflush(stdout);
-
+        writeLog_sock("SOCKET SERVER: serverHandlingFunction read message: %s", buffer_rec);
+       
         // write back the echo to client
         n = write(newsock_fd, buffer_rec, sizeof(buffer_rec));
         if (n == -1)
         {
             error("socket_server: serverHandlingFunction (while(1)) write buffer");
         }
-        writeLog("SOCKET SERVER: serverHandlingFunction write echo %s", buffer_rec);
-        printf("#### SS, ServHandFunc write echo: %s\n\n", buffer_rec);
-        fflush(stdout);
+        writeLog_sock("SOCKET SERVER: serverHandlingFunction write echo message: %s", buffer_rec);
+        
         int array_size;
         char id;
 
         // parse the message comes from client, and save the result in result_array
         id = parseMessage(buffer_rec, result_array, &array_size);
-        printf("--------------------------------------------------------\n");
-        printf("%c", id);
+        writeLog_sock("--------------------------------------------------------\n");
+        writeLog_sock("%c", id);
         // Stampare l'array bidimensionale
-        printf("Array bidimensionale:\n");
+        writeLog_sock("Array bidimensionale:");
         for (int i = 0; i < 20; i++)
         {
-            printf("%lf, %lf\n", result_array[i][0], result_array[i][1]);
+            writeLog_sock("%lf, %lf\n", result_array[i][0], result_array[i][1]);
         }
-        printf("--------------------------------------------------------\n");
+        writeLog_sock("--------------------------------------------------------\n");
         // divide the message comes from client for window size
         // now the target and obstacle are normalized
         for (int i = 0; i < array_size; i++)
@@ -173,8 +183,6 @@ void serverHandlingFunction(int newsock_fd, double window_size[])
             {
                 error("socket_server: serverHandlingFunction write fdss_s_o");
             }
-            printf("#### SS, ServHandFunc sent to server obstacle\n\n");
-            fflush(stdout);
         }
         else if (id == 'T')
         {
@@ -184,15 +192,14 @@ void serverHandlingFunction(int newsock_fd, double window_size[])
             {
                 error("socket_server: serverHandlingFunction write fdss_s_t");
             }
-            printf("#### SS, ServHandFunc sent to server target\n\n");
-            fflush(stdout);
         }
         else
         {
-            printf("Invalid ID\n");
+            writeLog_sock("Invalid ID");
         }
     }
 }
+
 
 void server(int readFD_winSize)
 {
@@ -209,6 +216,7 @@ void server(int readFD_winSize)
     {
         error("socket_server: error opening socket");
     }
+
     // set the socket struct to zero
     bzero((char *)&serv_addr, sizeof(serv_addr));
 
@@ -232,7 +240,7 @@ void server(int readFD_winSize)
         }
         else
         {
-            printf("== server : binding success\n");
+            writeLog_sock("==> server : binding success\n");
         }
     }
 
@@ -240,11 +248,11 @@ void server(int readFD_winSize)
     listen_ret = listen(sock_fd, 5);
     if (listen_ret < 0)
     {
-        error("socket_sever_server: fd not listening");
+        error("socket_sever_server: fd listening");
     }
     else
     {
-        printf("== socket_server : fd listening, success\n");
+        writeLog_sock("== socket_server : fd listening, success\n");
     }
 
     cli_len = sizeof(cli_addr);
@@ -254,14 +262,12 @@ void server(int readFD_winSize)
     {
         error("socket server: read fds_ss[0]");
     }
-    writeLog("SOCKET SERVER: server window size row: %d, col: %d", int_window_size[0], int_window_size[1]);
 
     // cast window size to double
     double window_size[2] = {(double)int_window_size[0], (double)int_window_size[1]};
 
-    printf("== server : Local IP: %s\n", inet_ntoa(serv_addr.sin_addr));
-    printf("== server : Local Port: %d\n", ntohs(serv_addr.sin_port));
-    fflush(stdout);
+    writeLog_sock("== server : Local IP: %s\n", inet_ntoa(serv_addr.sin_addr));
+    writeLog_sock("== server : Local Port: %d\n", ntohs(serv_addr.sin_port));
 
     // variabe for fork after acept
     pid_t pid;
@@ -272,8 +278,7 @@ void server(int readFD_winSize)
         if (getpid() == father_pid)
         {
             // in father pid
-            printf("server activated\n");
-            fflush(stdout);
+            writeLog_sock("server activated\n");
 
             // accept te connection from client, and generate new file descriptor
             do
@@ -282,20 +287,16 @@ void server(int readFD_winSize)
             } while (newsock_fd < 0 && errno == EINTR);
             if (newsock_fd < 0)
             {
-                error("socket server: error on accept");
-                printf("=== server : Remote IP: %s\n", inet_ntoa(cli_addr.sin_addr));
-                printf("=== server : Remote Port: %d\n", ntohs(cli_addr.sin_port));
-                fflush(stdout);
+                error("socket.server: accept");
             }
             else
             {
-                printf("Connection established\n");
-                fflush(stdout);
+                writeLog_sock("Connection established\n");
             }
 
             if ((pid = fork()) < 0)
             {
-                error("socket_server: server function fork");
+                error("socket.server: fork()");
             }
         }
         if (pid == 0)
@@ -319,16 +320,6 @@ void data_conversion(char string_mat[][256], double reading_set[][2], int lenght
         sprintf(string_mat[i], "%.3f,%.3f", reading_set[i][0], reading_set[i][1]);
         // save positon in a string in the form (y | x)
     }
-
-    /*
-    printf("/// data CONVERTED to string --> ");
-    for (int i = 0; i < lenght/2; i++)
-    {
-        printf("%s --", string_mat[i]);
-    }
-    printf("\n\n");
-    fflush(stdout);
-    */
 }
 
 void data_organizer(char string_mat[][256], char send_string[], int lenght, char *client_id)
@@ -348,7 +339,6 @@ void data_organizer(char string_mat[][256], char send_string[], int lenght, char
             strcat(send_string, "|");
         }
     }
-    // printf("/// %s: data ORGANIZER payload --> %s\n\n", client_id, send_string);
 }
 
 void client(int port_no_cli, char *string_ip, char *client_ID, int reading_pipe, int lenght)
@@ -391,18 +381,6 @@ void client(int port_no_cli, char *string_ip, char *client_ID, int reading_pipe,
     bcopy((char *)server->h_addr, (char *)&server_address.sin_addr.s_addr, server->h_length);
     server_address.sin_port = htons(port_no_cli);
 
-    // printf("== client : Local IP: %s\n", inet_ntoa(server_address.sin_addr));
-    // printf("== client : Remote IP: %s\n", inet_ntoa(server_address.sin_addr));
-
-    // printf("== client : port_no_cli: %d\n", port_no_cli);
-    // printf("== client : Remote Port: %d\n", ntohs(server_address.sin_port));
-
-    // printf("== client : Host name: %s\n", server->h_name);
-    // printf("== client : Host address type: %d\n", server->h_addrtype);
-    // printf("== client : Length: %d\n", server->h_length);
-    // printf("== client : Host address: %s\n", inet_ntoa(*(struct in_addr *)server->h_addr));
-    // fflush(stdout);
-
     // start communication with the server
     do
     {
@@ -413,7 +391,7 @@ void client(int port_no_cli, char *string_ip, char *client_ID, int reading_pipe,
         }
         else
         {
-            writeLog("SOCKET SERVER: client connected to the server");
+            writeLog_sock("SOCKET SERVER: client connected to the server");
         }
 
     } while (ret_n < 0 && errno == EINTR);
@@ -426,9 +404,7 @@ void client(int port_no_cli, char *string_ip, char *client_ID, int reading_pipe,
     {
         error("socket_server: write in socket");
     }
-    writeLog("SOCKET SERVER: client write -- client id");
-    printf("#### %s: %s client write -- client id\n", client_ID, client_ID);
-    fflush(stdout);
+    writeLog_sock("SOCKET SERVER: client write client_ID : %s", client_ID);
     // set to zero the echo array
     bzero(echo, MAX_MSG_LENGHT);
 
@@ -438,9 +414,8 @@ void client(int port_no_cli, char *string_ip, char *client_ID, int reading_pipe,
     {
         error("socket_server: write in socket");
     }
-    writeLog("SOCKET SERVER: client read echo -- client_id");
-    printf("/// %s: %s client read echo -- client_id\n", client_ID, echo);
-    fflush(stdout);
+    writeLog_sock("SOCKET SERVER: client read echo client_id: %s", echo);
+   
     // read the window size from server
     bzero(buffer_rec, MAX_MSG_LENGHT);
     n = read(sock_fd, buffer_rec, sizeof(buffer_rec));
@@ -448,8 +423,7 @@ void client(int port_no_cli, char *string_ip, char *client_ID, int reading_pipe,
     {
         error("socket_server: read from socket");
     }
-    printf("/// %s: %s -- window size\n", client_ID, buffer_rec);
-    fflush(stdout);
+    writeLog_sock("SOCKET SERVER: client read window_size %s", buffer_rec);
 
     // send the window size as echo to server
     n = write(sock_fd, buffer_rec, sizeof(buffer_rec));
@@ -459,10 +433,7 @@ void client(int port_no_cli, char *string_ip, char *client_ID, int reading_pipe,
     }
     // convert dimension window in double
     sscanf(buffer_rec, "%lf,%lf", &window_size[0], &window_size[1]);
-    writeLog("SOCKET SERVER: client read window_size %f,%f", window_size[0], window_size[1]);
-    printf("/// %s: %f,%f -- window size (double)\n", client_ID, window_size[0], window_size[1]);
-    fflush(stdout);
-
+   
     // variable for select
     int retVal_sel;
     int retVal_read;
@@ -521,10 +492,8 @@ void client(int port_no_cli, char *string_ip, char *client_ID, int reading_pipe,
             {
                 error("socket_server: write sock_fd item data");
             }
-            writeLog("SOCKET SERVER: client write %s", buffer_send);
-            printf("/// %s output client: %d -- %s\n\n", client_ID, n, buffer_send);
-            fflush(stdout);
-
+            writeLog_sock("SOCKET SERVER: client write message: %s", buffer_send);
+           
             // set all the buffer field to zero
             bzero(buffer_send, MAX_MSG_LENGHT);
 
@@ -534,9 +503,8 @@ void client(int port_no_cli, char *string_ip, char *client_ID, int reading_pipe,
             {
                 error("socket_server: read sock_fd item data");
             }
-            writeLog("SOCKET SERVER: client read echo %s", buffer_rec);
-            printf("/// %s echo client: %d -- %s\n\n", client_ID, n, buffer_rec);
-            fflush(stdout);
+            writeLog_sock("SOCKET SERVER: client read echo message:%s", buffer_rec);
+           
         }
     }
 
@@ -545,22 +513,39 @@ void client(int port_no_cli, char *string_ip, char *client_ID, int reading_pipe,
 
 void pipe_fd_init(int fd_array[][2], char *argv[], int indx_offset);
 
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+///                       MAIN FUNCTION                                                       ///
+/////////////////////////////////////////////////////////////////////////////////////////////////
 int main(int argc, char *argv[])
 {
-
-    ///////////////////////////////////////// set executed by all processes /////////////////////////////////////////
     // to have all the fd in the two processes
-    int socket_server = getpid();
+    pid_t socket_server = getpid();
     int i;
+    writeLog("SOCKET SERVER created with pid %d ", socket_server);
+    writeLog_sock("SOCKET SERVER created with pid %d ", socket_server);
+
+    // configure the handler for sigusr1
+    struct sigaction sa_usr1;
+    sa_usr1.sa_sigaction = sigusr1Handler;
+    sa_usr1.sa_flags = SA_SIGINFO;
+
+    if (sigaction(SIGUSR1, &sa_usr1, NULL) == -1)
+    {
+        error("socket_server: sigaction");
+    }
 
     // widnow size
     int window_size[2]; //[row, col]
     int fd_unpack[7][2];
 
-    // str_fd7[0], str_fd7[1], str_fdt_s[0], str_fdt_s[1], str_fdo_s[0], str_fdo_s[1], str_fdss_s[0], str_fdss_s[1], str_fds_ss[0], str_fds_ss[1]
-
     pipe_fd_init(fd_unpack, argv, 1);
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ///                      MANAGE PIPE                                                                             ///
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    
     // associa i file descriptor alle variabli nominali
     fd7[0] = fd_unpack[0][0]; // pid pipe
     fd7[1] = fd_unpack[0][1];
@@ -611,6 +596,9 @@ int main(int argc, char *argv[])
     writeLog("SOCKET SERVER: fdss_s_o %d, %d", fdss_s_o[0], fdss_s_o[1]);
     writeLog("SOCKET SERVER: fds_ss   %d, %d", fds_ss[0], fds_ss[1]);
     writeLog("SOCKET SERVER: fdrp_ss  %d, %d", fdrp_ss[0], fdrp_ss[1]);
+
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ///                      SOCKET PART                                                                          ///
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     // Create separate processes for server and client
@@ -634,21 +622,19 @@ int main(int argc, char *argv[])
             error("soket_server: read fdrp_ss[0]");
         }
 
-        writeLog("socket_server: read socket_info %d , %s", readRP_n, socket_info);
+        writeLog_sock("socket.main: read socket_info %d , %s", readRP_n, socket_info);
         retVall = string_parser(socket_info, string_ip, string_port_no);
 
-        printf("== client : string_ip: %s\n", string_ip);
-        printf("== client : string_port_no: %s\n", string_port_no);
-        fflush(stdout);
+        writeLog_sock("== client : string_ip: %s\n", string_ip);
+        writeLog_sock("== client : string_port_no: %s\n", string_port_no);
 
         port_no_cli = atoi(string_port_no);
-        // printf("== client : port_no_cli (after atoi) %d\n", port_no_cli);
 
         // create a process for obstacle and one for targsocketet
         obst_pid = fork();
         if (obst_pid < 0)
         {
-            error("socket_server, client: fork obstacle client");
+            error("socket.server, client: fork obstacle client");
         }
         if (obst_pid != 0)
         {
@@ -656,7 +642,7 @@ int main(int argc, char *argv[])
             targ_pid = fork();
             if (targ_pid < 0)
             {
-                error("socket_server, client: fork targhet client");
+                error("socket.server, client: fork target client");
             }
         }
         if (obst_pid == 0)
@@ -675,6 +661,17 @@ int main(int argc, char *argv[])
         // Parent process
         server(fds_ss[0]);
     }
+
+    // close all the file descriptor
+    closeAndLog(fds_ss[0], "socket_server: close fds_ss[0]");
+    closeAndLog(fds_ss[1], "socket_server: close fds_ss[1]");
+    closeAndLog(fdrp_ss[0], "socket_server: close fdrp_ss[0]");
+    closeAndLog(fdrp_ss[1], "socket_server: close fdrp_ss[1]");
+    closeAndLog(fdss_s_o[1], "socket_server: close fdss_s_o[0]");
+    closeAndLog(fdss_s_t[1], "socket_server: close fdss_s_t[0]");
+    closeAndLog(fdo_s[0], "socket_server: close fdo_s[0]");
+    closeAndLog(fdt_s[0], "socket_server: close fdt_s[0]");
+    
     return 0;
 }
 

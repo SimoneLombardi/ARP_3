@@ -22,7 +22,7 @@ void sigusr2Handler(int signum, siginfo_t *info, void *context)
 {
     if (signum == SIGUSR2)
     {
-        writeLog("WATCHDOG received signal from %d ", info->si_pid);
+        writeLog_wd("WATCHDOG received signal from %d ", info->si_pid);
         counter--;
     }
 }
@@ -32,7 +32,8 @@ int main(int argc, char *argv[])
 
     pid_t wd_pid = getpid();
     // write into logfile
-    writeLog("WATCHDOG is create with pid %d ", wd_pid);
+    writeLog_wd("WATCHDOG is create with pid %d ", wd_pid);
+    writeLog_wd("WATCHDOG is create with pid %d ", wd_pid);
     // In this array I will put all the proces pid converted in int
     int num_ps = PROCESS_NUMBER;
     pid_t pids_from_master[num_ps];
@@ -61,11 +62,11 @@ int main(int argc, char *argv[])
     // write in logfile all the process received
     for (i = 0; i < num_ps; i++)
     {
-        writeLog("WATCHDOG received pid from master: %d", pids_from_master[i]);
+        writeLog_wd("WATCHDOG received pid from master: %d", pids_from_master[i]);
     }
     for (i = 0; i < num_ps; i++)
     {
-        writeLog("WATCHDOG received pid from process: %d", pids_from_process[i]);
+        writeLog_wd("WATCHDOG received pid from process: %d", pids_from_process[i]);
     }
     // infinite loop for the operations of wd
     while (1)
@@ -88,7 +89,7 @@ int main(int argc, char *argv[])
             if (counter == 0)
             {
                 // case where the proccess is alive
-                writeLog("V - WATCHDOG: Process %d is alive ", pids_from_process[i]);
+                writeLog_wd("V - WATCHDOG: Process %d is alive ", pids_from_process[i]);
             }
             else
             {
@@ -99,25 +100,25 @@ int main(int argc, char *argv[])
                     if (kill(pids_from_process[j], SIGKILL) == 0)
                     {
                         /*write into logfile that wd close the process*/
-                        writeLog(" * WATCHDOG: process %d is closed by wd ", pids_from_process[j]);
+                        writeLog_wd(" * WATCHDOG: process %d is closed by wd ", pids_from_process[j]);
                     }
                     else
                     {
-                        writeLog("==> ERROR ==> wd: kill signal SIGKILL %m ");
+                        writeLog_wd("==> ERROR ==> wd: kill signal SIGKILL %m ");
                     }           
                     if (kill(pids_from_master[j], SIGKILL) == 0)
                     {
                         /*write into logfile that wd close the process*/
-                        writeLog("WATCHDOG: process %d is closed by wd ", pids_from_master[j]);
+                        writeLog_wd("WATCHDOG: process %d is closed by wd ", pids_from_master[j]);
                     }
                     else
                     {
-                        writeLog("==> ERROR ==> wd: kill signal SIGKILL wd %m ");
+                        writeLog_wd("==> ERROR ==> wd: kill signal SIGKILL wd %m ");
                     }
                     /*
                     if (exit(0) == -1){
                         perror("WD: exit() ");
-                        writeLog("==> ERROR ==> wd:  ");
+                        writeLog_wd("==> ERROR ==> wd:  ");
      
                     }*/
                     
