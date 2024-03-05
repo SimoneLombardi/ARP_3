@@ -249,12 +249,12 @@ int main()
         sprintf(str_child_pids_received[i], "%d", child_pids_received[i]);
     }
 
-    writeLog("MASTER: child_pids are: %s, %s, %s, %s, %s ", str_child_pids[0], str_child_pids[1], str_child_pids[2], str_child_pids[3], str_child_pids[4], str_child_pids[5]);
-    writeLog("MASTER child_pids_received are: %s, %s, %s, %s, %s", str_child_pids_received[0], str_child_pids_received[1], str_child_pids_received[2], str_child_pids_received[3], str_child_pids_received[4], str_child_pids_received[5]);
+    writeLog("MASTER: child_pids are: %s, %s, %s, %s, %s, %s ", str_child_pids[0], str_child_pids[1], str_child_pids[2], str_child_pids[3], str_child_pids[4], str_child_pids[5]);
+    writeLog("MASTER child_pids_received are: %s, %s, %s, %s, %s, %s", str_child_pids_received[0], str_child_pids_received[1], str_child_pids_received[2], str_child_pids_received[3], str_child_pids_received[4], str_child_pids_received[5]);
     
     //------- WATCHDOG process --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     // spawn watchdog, and pass as argument all the pids of processes
-    char *arg_list_wd[] = {"./wd", str_child_pids[0], str_child_pids[1], str_child_pids[2], str_child_pids[3], str_child_pids[4], str_child_pids[5], str_child_pids_received[1], str_child_pids_received[2], str_child_pids_received[3], str_child_pids_received[4], str_child_pids_received[5], NULL};
+    char *arg_list_wd[] = {"./wd", str_child_pids[0], str_child_pids[1], str_child_pids[2], str_child_pids[3], str_child_pids[4], str_child_pids[5], str_child_pids_received[0],str_child_pids_received[1], str_child_pids_received[2], str_child_pids_received[3], str_child_pids_received[4], str_child_pids_received[5], NULL};
     child_pids[num_ps] = spawn("./wd", arg_list_wd);
     writeLog("MASTER spawn WATCHDOG with pid: %d ", child_pids[num_ps]);
     // The master will wait until all the process will terminate
@@ -275,12 +275,14 @@ int main()
         if (WIFEXITED(status))
         {
             writeLog("Process %d is termined with status %d\n", i, WEXITSTATUS(status));
+            writeLog_wd("Process %d is termined with status %d\n", i, WEXITSTATUS(status));
             printf("Process %d is termined with status %d\n", i, WEXITSTATUS(status));
             fflush(stdout);
         }
         else
         {
             writeLog("Process %d is termined with anomaly\n", i);
+            writeLog_wd("Process %d is termined with anomaly\n", i);
             printf("Process %d is termined with anomaly\n", i);
             fflush(stdout);
         }

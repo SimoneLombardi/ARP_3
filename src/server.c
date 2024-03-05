@@ -229,8 +229,8 @@ int main(int argc, char *argv[])
     }
     else
     {
-        writeLog("///SERVER: controllo byte LETTI target: %d", retVal_read);
-        printf("///SERVER: controllo byte LETTI target: %d", retVal_read);
+        // checking readed byte in pipe
+        writeLog("SERVER: read %d bytes in fdss_s_t[0]", retVal_read);
     }
 
     // moltiply the target for the reference system. I use the same reference system of the drone
@@ -315,6 +315,8 @@ int main(int argc, char *argv[])
                         }
                         else
                         {
+                            // checking readed byte in pipe
+                            writeLog("SERVER: read %d bytes in fdss_s_o[0]", retVal_read);
                             // moltiply the obstacle for the windows size --> get int position of obstacle
                             for (i = 0; i < MAX_OBST_ARR_SIZE; i++)
                             {
@@ -563,7 +565,7 @@ void sigusr1Handler(int signum, siginfo_t *info, void *context)
         {
             error("server: kill SIGUSR2");
         }
-        writeLog("SERVER, pid %d, received signal from wd pid: %d ", getpid(), info->si_pid);
+        writeLog_wd("SERVER, pid %d, received signal from wd pid: %d ", getpid(), info->si_pid);
     }
 }
 

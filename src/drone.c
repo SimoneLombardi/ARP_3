@@ -208,7 +208,7 @@ void sigusr1Handler(int signum, siginfo_t *info, void *context)
     {
         /*send a signal SIGUSR2 to watchdog */
         kill(info->si_pid, SIGUSR2);
-        writeLog("DRONE, pid: %d, received signal from wd pid: %d ", getpid(), info->si_pid);
+        writeLog_wd("DRONE, pid: %d, received signal from wd pid: %d ", getpid(), info->si_pid);
     }
 }
 

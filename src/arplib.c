@@ -26,6 +26,7 @@ int spawn(const char *program, char **arg_list)
     }
     return 1;
 }
+////////////////////////////////////////////////////////////////////////////
 
 // function for write in logfile
 void writeLog(const char *format, ...)
@@ -72,6 +73,7 @@ void writeLog(const char *format, ...)
         
     }
 }
+////////////////////////////////////////////////////////////////////////////
 
 // function for write in logfile_sock
 void writeLog_sock(const char *format, ...)
@@ -117,6 +119,7 @@ void writeLog_sock(const char *format, ...)
         error("fclose logfile_sock");
     }
 }
+////////////////////////////////////////////////////////////////////////////
 
 // function for write in logfile_wd
 void writeLog_wd(const char *format, ...)
@@ -162,6 +165,7 @@ void writeLog_wd(const char *format, ...)
         error("fclose logfile_wd");
     }
 }
+////////////////////////////////////////////////////////////////////////////
 
 // return sign of arg X
 int sign(int x)
@@ -173,6 +177,7 @@ int sign(int x)
     else
         return 1;
 }
+////////////////////////////////////////////////////////////////////////////
 
 // create a pipe and convert the value to string for send the fd, used only on master process
 void create_pipe(int pipe_fd[], char string_pipe_fd[][20], char *descriptorName)
@@ -202,12 +207,32 @@ void closeAndLog(int fd, const char *descriptorName)
     }
 }
 
-// function for print the error
+// function for print the error in writeLog and exit
 void error(char *descriptorName)
 {
     perror(descriptorName);
     // Assuming writeLog is a function for logging errors
     writeLog("==> ERROR ==> %s, %m", descriptorName);
+    exit(EXIT_FAILURE);
+}
+////////////////////////////////////////////////////////////////////////////
+
+// error for socket function
+void error_sock(char *descriptorName)
+{
+    perror(descriptorName);
+    // Assuming writeLog is a function for logging errors
+    writeLog_sock("==> ERROR ==> %s, %m", descriptorName);
+    exit(EXIT_FAILURE);
+}
+////////////////////////////////////////////////////////////////////////////
+
+// error for socket function
+void error_wd(char *descriptorName)
+{
+    perror(descriptorName);
+    // Assuming writeLog is a function for logging errors
+    writeLog_wd("==> ERROR ==> %s, %m", descriptorName);
     exit(EXIT_FAILURE);
 }
 
@@ -233,3 +258,4 @@ void recive_correct_pid(int pipe_fd[2], int *pid_address)
         writeLog("==> ERROR ==> master: close pipe WR, %m ");
     }
 }
+////////////////////////////////////////////////////////////////////////////

@@ -11,6 +11,7 @@
 #include <signal.h>
 #include <time.h>
 #include <stdarg.h>
+#include <errno.h>
 #include "arplib.h"
 #include "../config/config.h"
 
@@ -30,64 +31,83 @@ void sigusr2Handler(int signum, siginfo_t *info, void *context)
 int main(int argc, char *argv[])
 {
 
-    pid_t wd_pid = getpid();
     // write into logfile
+    int i, n;
+    int num_ps = PROCESS_NUMBER;
+    pid_t wd_pid = getpid();
+    pid_t pids_from_master[num_ps];
+    pid_t pids_from_process[num_ps];
 
     // Open the log file for cancel the content
     FILE *logfile = fopen("../log/logfile_wd.txt", "w");
     if (logfile == NULL)
     {
-        error("error opening logfile_wd");
+        perror("wd: fopen");
+        writeLog_wd("==> ERROR ==> wd: fopen");
     }
-    
+
     writeLog_wd("WATCHDOG is create with pid %d ", wd_pid);
     writeLog("WATCHDOG is create with pid %d ", wd_pid);
     // In this array I will put all the proces pid converted in int
-    int num_ps = PROCESS_NUMBER;
-    pid_t pids_from_master[num_ps];
-    pid_t pids_from_process[num_ps];
-    // declared for all the for cycle
-    int i;
 
-    /*configure the handler for sigusr2*/
+    // configure the handler for sigusr2
     struct sigaction sa_usr2;
     sa_usr2.sa_sigaction = sigusr2Handler;
     sa_usr2.sa_flags = SA_SIGINFO; // I need also the info foruse the pid of the process for unde
     if (sigaction(SIGUSR2, &sa_usr2, NULL) == -1)
     {
-        error("wd: sigaction");
+        perror("wd: sigaction");
+        writeLog_wd("==> ERROR ==> wd: sigaction");
     }
+
     // exctract and convert the pid send from master, they are in position 1 => nm_ps +1
     for (i = 1; i < num_ps + 1; i++)
     {
         pids_from_master[i - 1] = atoi(argv[i]);
+        if (pids_from_master[i - 1] == 0)
+        {
+            perror("wd: atoi");
+            writeLog_wd("==> ERROR ==> wd: atoi");
+        }
+        writeLog_wd("WATCHDOG received pid from master: %d", pids_from_master[i - 1]);
     }
+    writeLog_wd("\n");
     // extract and convert in integer the pid received from process position num_ps +1 => 2*num_ps +1
     for (i = num_ps + 1; i < (2 * num_ps) + 1; i++)
     {
         pids_from_process[i - (num_ps + 1)] = atoi(argv[i]);
+        if (pids_from_process[i - (num_ps + 1)] == 0)
+        {
+            perror("wd: atoi");
+            writeLog_wd("==> ERROR ==> wd: atoi");
+        }
+        writeLog_wd("WATCHDOG received pid from process: %d", pids_from_process[i - (num_ps + 1)]);
     }
-    // write in logfile all the process received
-    for (i = 0; i < num_ps; i++)
-    {
-        writeLog_wd("WATCHDOG received pid from master: %d", pids_from_master[i]);
-    }
-    for (i = 0; i < num_ps; i++)
-    {
-        writeLog_wd("WATCHDOG received pid from process: %d", pids_from_process[i]);
-    }
+
+    writeLog_wd("WATCHDOG is ready to work");
     // infinite loop for the operations of wd
     while (1)
     {
         // Inizialize the counter every time enter in the loop
         counter = 0;
-        // send a signal to all process 
+        // send a signal to all process
         for (i = 0; i < num_ps; i++)
         {
             /* send signal to all process*/
-            if (kill(pids_from_process[i], SIGUSR1) != 0)
+            n = kill(pids_from_process[i], SIGUSR1);
+            if (n == -1)
             {
-                error("wd: kill signal SIGUSR1");
+                if (errno == ESRCH)
+                {
+                    // No such process
+                    writeLog_wd("==> WARNING ==> wd: No such process: %d ", pids_from_process[i]);
+                }
+                else
+                {
+                    // Some other error occurred
+                    perror("wd: kill");
+                    writeLog_wd("==> ERROR ==> wd: kill signal SIGUSR1 %m ");
+                }
             }
             /* increment the counter when send the signal SIGUSR1*/
             counter++;
@@ -97,7 +117,7 @@ int main(int argc, char *argv[])
             if (counter == 0)
             {
                 // case where the proccess is alive
-                writeLog_wd("V - WATCHDOG: Process %d is alive ", pids_from_process[i]);
+                writeLog_wd("WATCHDOG: Process %d is alive ", pids_from_process[i]);
             }
             else
             {
@@ -105,6 +125,7 @@ int main(int argc, char *argv[])
                 /*kill all process*/
                 for (int j = 0; j < num_ps + 1; j++)
                 {
+
                     if (kill(pids_from_process[j], SIGKILL) == 0)
                     {
                         /*write into logfile that wd close the process*/
@@ -112,8 +133,16 @@ int main(int argc, char *argv[])
                     }
                     else
                     {
-                        writeLog_wd("==> ERROR ==> wd: kill signal SIGKILL %m ");
-                    }           
+                        if (errno == ESRCH)
+                        {
+                            writeLog_wd("==> WARNING ==> wd: No such process: %d", pids_from_process[j]);
+                        }
+                        else
+                        {
+                            writeLog_wd("==> ERROR ==> wd: kill signal SIGKILL %m ");
+                        }
+                    }
+
                     if (kill(pids_from_master[j], SIGKILL) == 0)
                     {
                         /*write into logfile that wd close the process*/
@@ -121,20 +150,19 @@ int main(int argc, char *argv[])
                     }
                     else
                     {
-                        writeLog_wd("==> ERROR ==> wd: kill signal SIGKILL wd %m ");
+                        if (errno == ESRCH)
+                        {
+                            writeLog_wd("==> WARNING ==> wd: No such process: %d", pids_from_master[j]);
+                        }
+                        else
+                        {
+                            writeLog_wd("==> ERROR ==> wd: kill signal SIGKILL wd %m ");
+                        }
                     }
-                    /*
-                    if (exit(0) == -1){
-                        perror("WD: exit() ");
-                        writeLog_wd("==> ERROR ==> wd:  ");
-     
-                    }*/
-                    
                 }
                 return 0;
             }
             sleep(1);
         }
-
     }
 }

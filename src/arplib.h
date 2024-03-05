@@ -23,6 +23,10 @@ void closeAndLog(int fd, const char *descriptorName);
 
 void error(char *descriptorName);
 
+void error_sock(char *descriptorName);
+
+void error_wd(char *descriptorName);
+
 
 
 #endif //ARPLIB_H

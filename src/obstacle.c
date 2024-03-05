@@ -94,6 +94,8 @@ int main(int argc, char *argv[])
         {
             error("obstacle: error write fdo_s[1]");
         }
+        // check written byte inside the pipe
+        // writeLog("OBSTACLE: write %d bytes in fdo_s[1]", retVal_write);
         // generate obstacle every N seconds; implement a non-blocking timer to avoid problems with signals
         time_t t2 = time(NULL);
         while ((t2 - t) < N)
@@ -116,7 +118,7 @@ void sigusr1Handler(int signum, siginfo_t *info, void *context)
         /*send a signal SIGUSR2 to watchdog */
         if (kill(info->si_pid, SIGUSR2) == 0)
         {
-            writeLog("OBSTACLE: pid %d, received signal from wd pid: %d ", getpid(), info->si_pid);
+            writeLog_wd("OBSTACLE: pid %d, received signal from wd pid: %d ", getpid(), info->si_pid);
         }
         else
         {

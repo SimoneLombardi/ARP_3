@@ -87,7 +87,8 @@ int main(int argc, char *argv[])
     {
         error("obstacle: error write fdt_s[1]");
     }
-
+    // checking written byte in pipe 
+    // writeLog("TARGET: write %d bytes in fdt_s[1]", retVal_write);
     while (1)
     {
         sleep(1);
@@ -110,7 +111,7 @@ void sigusr1Handler(int signum, siginfo_t *info, void *context)
         // printf("SERVER sig handler");
         if (kill(info->si_pid, SIGUSR2) == 0)
         {
-            writeLog("TARGET: pid %d, received signal from wd pid: %d ", getpid(), info->si_pid);
+            writeLog_wd("TARGET: pid %d, received signal from wd pid: %d ", getpid(), info->si_pid);
         }
         else
         {
