@@ -180,7 +180,8 @@ The primitives used by the socket are:
 - **`wd.c`:** Checks if all processes are running correctly. The watchdog works with signals, sending a signal to a different process every second. The process that receives the signal sends another signal back to the watchdog to inform that it is working. If the watchdog receives the signal back, everything is okay; otherwise, it means that the process wasn't working correctly, and it kills all the processes. At the start, the watchdog reads process ids from the pipes because opening them with konsole, the pid is not the same as returned from exec in the master process.
 
 ### Project architecture
-![architettura_terzo_assignment](https://github.com/SimoneLombardi/ARP_3/assets/146358714/f712dd3e-a756-4a46-ae19-d4d959f19bfb)
+![architettura_terzo_assignment](https://github.com/SimoneLombardi/ARP_3/assets/146358714/bbefeb45-f4ba-4e84-9aa9-f9b65ce27483)
+
 
 ### Example of use 
 
