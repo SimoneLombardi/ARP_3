@@ -132,7 +132,8 @@ The primitives used by the drone are:
   - write() : sending data on a pipe
   - sigaction() : dealing with signals
   - kill() : send signals to the WD
-  
+
+
 - **`server.c`:** The server process is in charge of printing the map to the terminal and computing the repulsive force of the obstacle and limit of the work environment.
  The force of the obstacle are computed in the following way, depending on the distance from the drone:(to simplify the comparison the distance considered are all int values)
 if the distance is higher of a constant R
@@ -161,10 +162,9 @@ The primitives used by the server are:
   - kill() : send signals to the WD
 
 
-
 - **`socket.c`:** This process is responsable for handling the socket communication. This process start by implementing a socket serevr that waits for connection by some clients. After a fork() the child process implements a client that separates in two different process to handle the connection from a external target and obstacle process. This implementation is able to simultaneausly recive data and send data to another machine. 
 
-The primitives used by the server are:
+The primitives used by the socket are:
   - bind() : nameing the file descriptor
   - socket() : obtaining the file descriptor for the soket
   - listen() : allow the server to accept connection
