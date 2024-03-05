@@ -161,6 +161,7 @@ The primitives used by the server are:
   - kill() : send signals to the WD
 
 
+
 - **`socket.c`:** This process is responsable for handling the socket communication. This process start by implementing a socket serevr that waits for connection by some clients. After a fork() the child process implements a client that separates in two different process to handle the connection from a external target and obstacle process. This implementation is able to simultaneausly recive data and send data to another machine. 
 
 The primitives used by the server are:
