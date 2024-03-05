@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <ncurses.h>
 #include <sys/types.h>
+#include "../config/config.h"
 
 // Function for spawn process
 int spawn(const char *program, char **arg_list)
@@ -236,6 +237,8 @@ void error_wd(char *descriptorName)
     exit(EXIT_FAILURE);
 }
 
+////////////////////////////////////////////////////////////////////////////
+
 // save the real pid of the process
 // ARGS: 1) pipe array fd, 2) address of the variable to save the pid ex: &child_pids_received[i]
 void recive_correct_pid(int pipe_fd[2], int *pid_address)
@@ -259,3 +262,116 @@ void recive_correct_pid(int pipe_fd[2], int *pid_address)
     }
 }
 ////////////////////////////////////////////////////////////////////////////
+//           SOCKET FUNCTIONS                                           ////
+////////////////////////////////////////////////////////////////////////////
+
+// functions for parse the uncoming string
+int string_parser_sock(char *string, char *first_arg, char *second_arg)
+{
+    // define the char that separate the arguments in the string
+    char *separator = " ";
+    char *arg;
+    int ret_val;
+    char temp[256];
+
+    strcpy(temp, string);
+
+    arg = strtok(temp, separator);
+    strcpy(first_arg, arg);
+
+    arg = strtok(NULL, separator);
+    if (arg == NULL)
+    {
+        ret_val = 0;
+    }
+    else
+    {
+        ret_val = 1;
+        strcpy(second_arg, arg);
+    }
+
+    return ret_val;
+}
+
+////////////////////////////////////////////////////////////////////////////
+
+// function for unpack the pipe
+void pipe_fd_init(int fd_array[][2], char *argv[], int indx_offset)
+{
+    int j = 0;
+    for (int i = 0; i < 7; i++)
+    {
+        fd_array[i][0] = atoi(argv[j + indx_offset]);
+        fd_array[i][1] = atoi(argv[j + indx_offset + 1]);
+        j += 2;
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////
+
+char parseMessage(const char message[], double array[20][2], int *array_size)
+{
+    char *msg = (char *)message;
+    char id;
+    if (sscanf(msg, "%c[%d]", &id, array_size) != 2 || (id != 'O' && id != 'T'))
+    {
+        writeLog_sock("Failed to parse array size or invalid ID");
+        
+    }
+
+    msg = strchr(msg, '|');
+    if (!msg)
+    {
+        writeLog_sock("Failed to find start of data");
+    }
+
+    for (int i = 0; i < *array_size; i++)
+    {
+        if (sscanf(msg, "|%lf,%lf", &array[i][0], &array[i][1]) != 2)
+        {
+            writeLog_sock("Failed to parse pair %d", i);
+            return id;
+        }
+
+        msg = strchr(msg + 1, '|');
+        if (!msg && i != *array_size - 1)
+        {
+            writeLog_sock("Failed to find separator after pair %d", i);
+            return id;
+        }
+    }
+    return id;
+}
+
+
+////////////////////////////////////////////////////////////////////////////
+
+void data_conversion(char string_mat[][256], double reading_set[][2], int lenght)
+{
+    for (int i = 0; i < lenght; i++)
+    {
+        sprintf(string_mat[i], "%.3f,%.3f", reading_set[i][0], reading_set[i][1]);
+        // save positon in a string in the form (y | x)
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////
+
+void data_organizer(char string_mat[][256], char send_string[], int lenght, char *client_id)
+{
+    char header[30];
+    bzero(send_string, MAX_MSG_LENGHT);
+
+    sprintf(header, "%c[%d]", client_id[0], lenght);
+    // insert the number of obj in the head of the message
+    strcat(send_string, header);
+    // insert item coords and pipe in the send sendstring
+    for (int i = 0; i < lenght; i++)
+    {
+        strcat(send_string, string_mat[i]);
+        if (i < (lenght - 1))
+        { // avoid add a pipe after the last element
+            strcat(send_string, "|");
+        }
+    }
+}

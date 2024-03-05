@@ -28,5 +28,20 @@ void error_sock(char *descriptorName);
 void error_wd(char *descriptorName);
 
 
+/// SOCKET FUNCTIONS ///
+
+int string_parser_sock(char *string, char *first_arg, char *second_arg);
+
+void pipe_fd_init(int fd_array[][2], char *argv[], int indx_offset);
+
+char parseMessage(const char message[], double array[20][2], int *array_size);
+
+void data_conversion(char string_mat[][256], double reading_set[][2], int lenght);
+
+void data_organizer(char string_mat[][256], char send_string[], int lenght, char *client_id);
+
+
+
+
 
 #endif //ARPLIB_H

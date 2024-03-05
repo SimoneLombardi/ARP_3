@@ -28,6 +28,7 @@ int fd7[2], fdt_s[2], fdo_s[2], fdss_s_t[2], fdss_s_o[2], fds_ss[2], fdrp_ss[2];
 int int_window_size[2]; //[row, col]
 
 
+// singal handler for sigusr1
 void sigusr1Handler(int signum, siginfo_t *info, void *context)
 {
     if (signum == SIGUSR1)
@@ -44,42 +45,7 @@ void sigusr1Handler(int signum, siginfo_t *info, void *context)
     }
 }
 
-
-int string_parser(char *string, char *first_arg, char *second_arg);
-
-char parseMessage(const char message[], double array[20][2], int *array_size)
-{
-    char *msg = (char *)message;
-    char id;
-    if (sscanf(msg, "%c[%d]", &id, array_size) != 2 || (id != 'O' && id != 'T'))
-    {
-        writeLog_sock("Failed to parse array size or invalid ID");
-        
-    }
-
-    msg = strchr(msg, '|');
-    if (!msg)
-    {
-        writeLog_sock("Failed to find start of data");
-    }
-
-    for (int i = 0; i < *array_size; i++)
-    {
-        if (sscanf(msg, "|%lf,%lf", &array[i][0], &array[i][1]) != 2)
-        {
-            writeLog_sock("Failed to parse pair %d", i);
-            return id;
-        }
-
-        msg = strchr(msg + 1, '|');
-        if (!msg && i != *array_size - 1)
-        {
-            writeLog_sock("Failed to find separator after pair %d", i);
-            return id;
-        }
-    }
-    return id;
-}
+/////////////////////////////////////////////////////////////////////////////////////////////////
 
 // function for the communication with the client
 void serverHandlingFunction(int newsock_fd, double window_size[])
@@ -203,7 +169,9 @@ void serverHandlingFunction(int newsock_fd, double window_size[])
     }
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////////
 
+// server function
 void server(int readFD_winSize)
 {
     //// server variable ////
@@ -316,34 +284,9 @@ void server(int readFD_winSize)
     ////////////////////////
 }
 
-void data_conversion(char string_mat[][256], double reading_set[][2], int lenght)
-{
-    for (int i = 0; i < lenght; i++)
-    {
-        sprintf(string_mat[i], "%.3f,%.3f", reading_set[i][0], reading_set[i][1]);
-        // save positon in a string in the form (y | x)
-    }
-}
+/////////////////////////////////////////////////////////////////////////////////////////////////
 
-void data_organizer(char string_mat[][256], char send_string[], int lenght, char *client_id)
-{
-    char header[30];
-    bzero(send_string, MAX_MSG_LENGHT);
-
-    sprintf(header, "%c[%d]", client_id[0], lenght);
-    // insert the number of obj in the head of the message
-    strcat(send_string, header);
-    // insert item coords and pipe in the send sendstring
-    for (int i = 0; i < lenght; i++)
-    {
-        strcat(send_string, string_mat[i]);
-        if (i < (lenght - 1))
-        { // avoid add a pipe after the last element
-            strcat(send_string, "|");
-        }
-    }
-}
-
+// client function
 void client(int port_no_cli, char *string_ip, char *client_ID, int reading_pipe, int lenght)
 {
     int n;
@@ -514,10 +457,6 @@ void client(int port_no_cli, char *string_ip, char *client_ID, int reading_pipe,
     exit(EXIT_SUCCESS);
 }
 
-void pipe_fd_init(int fd_array[][2], char *argv[], int indx_offset);
-
-
-
 /////////////////////////////////////////////////////////////////////////////////////////////////
 ///                       MAIN FUNCTION                                                       ///
 /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -636,7 +575,7 @@ int main(int argc, char *argv[])
         }
 
         writeLog_sock("socket.main: read socket_info %d , %s", readRP_n, socket_info);
-        retVall = string_parser(socket_info, string_ip, string_port_no);
+        retVall = string_parser_sock(socket_info, string_ip, string_port_no);
 
         writeLog_sock("== client : string_ip: %s\n", string_ip);
         writeLog_sock("== client : string_port_no: %s\n", string_port_no);
@@ -688,40 +627,5 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-int string_parser(char *string, char *first_arg, char *second_arg)
-{
-    // define the char that separate the arguments in the string
-    char *separator = " ";
-    char *arg;
-    int ret_val;
-    char temp[256];
 
-    strcpy(temp, string);
 
-    arg = strtok(temp, separator);
-    strcpy(first_arg, arg);
-
-    arg = strtok(NULL, separator);
-    if (arg == NULL)
-    {
-        ret_val = 0;
-    }
-    else
-    {
-        ret_val = 1;
-        strcpy(second_arg, arg);
-    }
-
-    return ret_val;
-}
-
-void pipe_fd_init(int fd_array[][2], char *argv[], int indx_offset)
-{
-    int j = 0;
-    for (int i = 0; i < 7; i++)
-    {
-        fd_array[i][0] = atoi(argv[j + indx_offset]);
-        fd_array[i][1] = atoi(argv[j + indx_offset + 1]);
-        j += 2;
-    }
-}

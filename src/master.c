@@ -16,7 +16,7 @@
 #include "arplib.h"
 #include "../config/config.h"
 
-int string_parser(char *string, char *first_arg, char *second_arg);
+int string_parser_master(char *string, char *first_arg, char *second_arg);
 
 int main()
 {
@@ -292,7 +292,7 @@ int main()
     return 0;
 }
 
-int string_parser(char *string, char *first_arg, char *second_arg)
+int string_parser_master(char *string, char *first_arg, char *second_arg)
 {
     // define the char that separate the arguments in the string
     char *separator = " ";
