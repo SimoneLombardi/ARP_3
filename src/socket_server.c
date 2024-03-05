@@ -155,7 +155,7 @@ int main(int argc, char *argv[])
     printf("Server listening on IP address: %s, Port: %d\n", string_ip, ntohs(serv_addr.sin_port));
 
     // set fd to listen
-    listen(sock_fd, 5);
+    listen(sock_fd, 10);
 
    
     FILE* fp;

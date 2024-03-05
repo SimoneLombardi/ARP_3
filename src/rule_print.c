@@ -74,7 +74,7 @@ int main(int argc, char *argv[]){
 
     // print the rules and wait to start the game
     do{
-        print_screen("../config/rule.txt", 22, 78, socket_info);
+        print_screen("../config/rule.txt", 21, 78, socket_info);
 
         ret_val = string_parser(socket_info, first_arg, second_arg);
 

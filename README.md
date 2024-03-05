@@ -1,4 +1,4 @@
-# Second assignment  
+# Third assignment  
 
 Project of Andrea Chiappe s4673275, Simone Lombardi s6119159
 
@@ -11,14 +11,41 @@ Every keys correspond to a force apply at the drone. It will be expleined after.
 ### Installation
 
 After downloading the repo with the command:
+
 ```
-git clone https://github.com/elchape99/ARP.git
+git clone https://github.com/SimoneLombardi/ARP_3.git
 ```
-you can use the command
+
+### Folder Structure
+
+The downloaded folder is composed bu 5 folder inside: `bin`, `config`, `lib`, `log`, `src`, a file run.sh and a file README.md.
+the first `bin` contain the executables of the programm. The `config` contain all the configuration file, including the parameters' file and the graphics. The `lib` contain the executaile of the library. in `log` there are the log file: `logfile.txt`, `logfile_sock.txt`, `logfile_wd.txt`. The folter `src` contains all the file .c of the project.
+
+### Launch Program
+
+After changed the correct repository is the time to run the program. In the folder willbe present 5 folders: `bin`, `config`, `lib`, `log`, `src`, a file run.sh and a file README.md. At this point in necessary to make the run.sh file executable. 
+For make run.sh executable use this command on shell:
+
 ```
-git checkout Ass2 
+chmod +x run.sh
 ```
-to switch to the correct branch. In here you will find some folder that contain al the file needed to run the entire project.
+
+Now the file is executable and is possile to run the program using running run.sh on shell:
+
+```
+./run.sh
+```
+
+Now the programm will start runnng and 3 windows will open: server, input and rule_print
+
+### Initialization 
+
+After the opening of the three window the first operation is to focus on the rule_print one. In this window are explained all the rule usefull for playng with simulator. 
+Here is necessary to wtite on the low bar two data: ip and port. 
+Here we have two possibilities:
+- If You want to play single player you have to insert inside as ip: localhost and as port 50000. Where 50000 is the port of the pc where you are listening on for target and obstacle.
+- If you want to play with an other pc you have to insert here the ip of the otehr pc and the port where the other pc is listening you for send the messages. In this modality the pc must to be connected to the same network. In this case at the other pc is necessary to give information of our ip and our listenig port thet is the 50000.
+
 
 ### Use of Simulator
 
@@ -35,11 +62,11 @@ The keys you can push are:
 - **X:** Move the drone down-left diagonal
 - **V:** Move the drone down-right diagonal
 
- 
+
  
 ### Project Structure
 
-The simulator, written in POSIX standard, consists of 5 processes working concurrently: `master.c`, `server.c`, `drone.c`, `input.c`, `obstacle.c`, `targhet.c`, and `wd.c`.
+The simulator, written in POSIX standard, consists of 5 processes working concurrently: `master.c`, `server.c`, `socket.c`, `drone.c`, `input.c`, `obstacle.c`, `targhet.c`, and `wd.c`.
 
 - **`master.c`:** Creates all processes using fork/exec* sys calls. It creates the server and input processes for a graphical interface. This process also creates the necessary pipes for communication between processes. All the communication is done using pipes, the initialization pipes characterized by a numeric index fd_<progessive_number> are used to ensure that the Watchdog process is in possession of the correct pid of each process. Exception made for the WD before starting the normal execution each process sends it's pid back to the master process, and using the environment variable argc and argv the WD is able to recive all the correct pid.
 
@@ -134,6 +161,21 @@ The primitives used by the server are:
   - kill() : send signals to the WD
 
 
+- **`socket.c`:** This process is responsable for handling the socket communication. This process start by implementing a socket serevr that waits for connection by some clients. After a fork() the child process implements a client that separates in two different process to handle the connection from a external target and obstacle process. This implementation is able to simultaneausly recive data and send data to another machine. 
+
+The primitives used by the server are:
+  - bind() : nameing the file descriptor
+  - socket() : obtaining the file descriptor for the soket
+  - listen() : allow the server to accept connection
+  - accept() : establish connection with a client 
+  - connect() : connect a client to a server
+  - close() : close the connection of the fd
+  - fopen() : opening the log file
+  - write() : sending data on a pipe
+  - sigaction() : dealing with signals
+  - kill() : send signals to the WD
+
+
 - **`wd.c`:** Checks if all processes are running correctly. The watchdog works with signals, sending a signal to a different process every second. The process that receives the signal sends another signal back to the watchdog to inform that it is working. If the watchdog receives the signal back, everything is okay; otherwise, it means that the process wasn't working correctly, and it kills all the processes. At the start, the watchdog reads process ids from the pipes because opening them with konsole, the pid is not the same as returned from exec in the master process.
 
 ### Project architecture
@@ -141,7 +183,9 @@ The primitives used by the server are:
 
 ### Example of use 
 
-A simple example of the use of the simulator is, for example: If I push the F key on the keyboard, the drone, identified by an X in the window, will move to the right with a force of "one." If I push the F key again, the drone will move faster to the right of the window. To stop the drone, I can:
+With the use of the process rule print the user is asked to insert the info (ip and port number) to establish the connection to the other machine.
+
+A simple example of the use of the simulator is, as follows: If I push the F key on the keyboard, the drone, identified by an X in the window, will move to the right with a force of "one." If I push the F key again, the drone will move faster to the right of the window. To stop the drone, I can:
 - Push the D key, which reset all the forces in the game. The drone will stop as an effect of the drag in the simulation.
 - Push the S key, to increase the force in the opposite direction, pushing S the same number of times of F will have the same effect of pressing D, but if you press S one more time the drone will stop than procede in the S direction with force of "one".
 
