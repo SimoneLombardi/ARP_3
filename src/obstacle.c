@@ -109,6 +109,12 @@ int main(int argc, char *argv[])
         {
             t2 = time(NULL);
         }
+
+        // reset the obstacle set to zero
+        for(i = 0; i < MAX_OBST_ARR_SIZE; i++){
+            set_of_obstacle[i][0] = 0;
+            set_of_obstacle[i][1] = 0;
+        } 
     }
     // close the write file descriptor fdo_s
     closeAndLog(fdo_s[1], "obstacle: close fdo_s[1]");

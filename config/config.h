@@ -8,7 +8,7 @@
 //----- def for server -----//
 #define DRONE_ICON 'X'
 #define MAX_OBST_ARR_SIZE 20 // parameter also for for obstacle process
-#define MAX_TARG_ARR_SIZE 20 // parameter also for the target process
+#define MAX_TARG_ARR_SIZE 5 // parameter also for the target process
 // big circle for the repulsive force near the obstacle
 #define OBST_RADIUS_FAR 3
 // smlcircle for the repulsive force near the obstacle

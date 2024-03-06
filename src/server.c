@@ -183,6 +183,8 @@ int main(int argc, char *argv[])
     int Srow, Scol; // righe e colonne massime dello schermo
     int Srow_new, Scol_new;
     int rowSH, colSH;
+    int retVal_write;
+    char termin_msg[MAX_MSG_LENGHT] = "GE";
     // initialization row
     initscr();
     raw();
@@ -235,11 +237,19 @@ int main(int argc, char *argv[])
 
     // moltiply the target for the reference system. I use the same reference system of the drone
     // The obstacle are between -1 and 1
+    int condition_victory = 0; // couter to control if the targhet are all collected
     for (i = 0; i < MAX_TARG_ARR_SIZE; i++)
     {
         int_set_of_target[i][0] = (int)((set_of_target[i][0] - 0.5) * spawn_Col);
         int_set_of_target[i][1] = (int)((set_of_target[i][1] - 0.5) * spawn_Row);
+
+        if (set_of_target[i][0] < 0.5 && set_of_target[i][1] < 0.5)
+        {
+            condition_victory++;
+        }
+        writeLog("SERVER: converted target %d, x = %d, y = %d, target %lf, %lf", i, int_set_of_target[i][0], int_set_of_target[i][1], set_of_target[i][0], set_of_target[i][1]);
     }
+    writeLog("SERVER: condition_victory = %d", condition_victory);
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////
     //                  INFINITE LOOP                                                                   //
@@ -490,15 +500,28 @@ int main(int argc, char *argv[])
                         mvwaddch(spawn_window, rowSH - int_set_of_target[i][1], colSH + int_set_of_target[i][0], 'T');
                     }
                 }
+                writeLog("SERVER: target %d reached, counter = %d", i, counter);
             }
             wattr_off(spawn_window, COLOR_PAIR(2), NULL);
 
             // refresch of the ncurses window
             wrefresh(spawn_window);
-            if (counter == MAX_TARG_ARR_SIZE)
+            if ((counter + condition_victory) == MAX_TARG_ARR_SIZE) //PROBLEMA --> se ci mandano meno di 20 targhet siamo fottuti --> non vinciamo mai
             {
                 print_screen("../config/winScreen.txt", 6, 87);
 
+                // game end handling --> writing to the socket server that the game has ended///
+                if((retVal_write = write(fds_ss[1], termin_msg, sizeof(termin_msg))) < 0){
+                    writeLog("SERVER: write error, termination message, byte %d, %m", retVal_write);
+                }else{
+                    writeLog(" =====> SERVER: write termination message to socket server");
+                }
+
+                // close all the open fd
+                closeAndLog(fds_d[1], "server: close fds_d[1]");
+                closeAndLog(fdi_s[0], "server: close fdi_s[0]");
+                closeAndLog(fdss_s_o[0], "server: close fdss_s_o[0]");
+                closeAndLog(fdd_s[0], "server: close fdd_s[0]");
                 //
                 exit(EXIT_SUCCESS);
                 // after closing win screen, the server will be closed
@@ -549,6 +572,7 @@ int main(int argc, char *argv[])
     closeAndLog(fdi_s[0], "server: close fdi_s[0]");
     closeAndLog(fdss_s_o[0], "server: close fdss_s_o[0]");
     closeAndLog(fdd_s[0], "server: close fdd_s[0]");
+    closeAndLog(fds_ss[0], "server: close fds_ss[0]");
 
     return 0;
 }

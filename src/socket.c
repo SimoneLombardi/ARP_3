@@ -23,10 +23,10 @@
 #include "../config/config.h"
 
 #define h_addr h_addr_list[0]
+
 int fd7[2], fdt_s[2], fdo_s[2], fdss_s_t[2], fdss_s_o[2], fds_ss[2], fdrp_ss[2];
 // server variable
 int int_window_size[2]; //[row, col]
-
 
 // singal handler for sigusr1
 void sigusr1Handler(int signum, siginfo_t *info, void *context)
@@ -68,7 +68,7 @@ void serverHandlingFunction(int newsock_fd, double window_size[])
     }
     strcpy(client_id, buffer_rec);
     writeLog_sock("SOCKET SERVER: serverHandlingFunction read client_ID %s", client_id);
-   
+
     // echo client_id
     n = write(newsock_fd, client_id, sizeof(client_id));
     if (n == -1)
@@ -87,7 +87,7 @@ void serverHandlingFunction(int newsock_fd, double window_size[])
         error_sock("socket_server, serverHandlingFunction write window_size");
     }
     writeLog_sock("SOCKET SERVER: serverHandlingFunction write window_size: %s", buffer_send);
-   
+
     // read the echo of window size
     bzero(echo, MAX_MSG_LENGHT);
     n = read(newsock_fd, echo, sizeof(echo));
@@ -96,7 +96,7 @@ void serverHandlingFunction(int newsock_fd, double window_size[])
         error_sock("socket_server: serverHandlingFunction read echo window_size");
     }
     writeLog_sock("SOCKET SERVER: serverHandlingFunction read echo window_size: %s", echo);
-   
+
     // while loop for the communication of target and obstacle
     while (1)
     {
@@ -110,7 +110,7 @@ void serverHandlingFunction(int newsock_fd, double window_size[])
             error_sock("socket_server: serverHandlingFunction read buffer");
         }
         writeLog_sock("SOCKET SERVER: serverHandlingFunction read message: %s", buffer_rec);
-       
+
         // write back the echo to client
         n = write(newsock_fd, buffer_rec, sizeof(buffer_rec));
         if (n == -1)
@@ -118,7 +118,7 @@ void serverHandlingFunction(int newsock_fd, double window_size[])
             error_sock("socket_server: serverHandlingFunction (while(1)) write buffer");
         }
         writeLog_sock("SOCKET SERVER: serverHandlingFunction write echo message: %s", buffer_rec);
-        
+
         int array_size;
         char id;
 
@@ -159,7 +159,7 @@ void serverHandlingFunction(int newsock_fd, double window_size[])
             {
                 error_sock("socket_server: serverHandlingFunction write fdss_s_t");
             }
-            // Checking written byte 
+            // Checking written byte
             writeLog_sock("SOCKET SERVER: serverHandlingFunction write %d bytes in fdss_s_t[1]", n);
         }
         else
@@ -172,10 +172,15 @@ void serverHandlingFunction(int newsock_fd, double window_size[])
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
 // server function
-void server(int readFD_winSize)
+void server(int readFD_gameServer)
 {
     //// server variable ////
     int sock_fd, newsock_fd, port_no, cli_len, ret_n, listen_ret;
+    // needed to send the termination msg
+    int child_count = 0;
+    int child_pid[2], child_sokfd[2];
+    char buffer[MAX_MSG_LENGHT];
+    // --- //
     char string_port_no[100], correct_str_port_no[100];
     char socket_info[100];
     char string_ip[INET_ADDRSTRLEN];
@@ -229,7 +234,7 @@ void server(int readFD_winSize)
     cli_len = sizeof(cli_addr);
 
     // reciveing the window size
-    if (read(readFD_winSize, int_window_size, sizeof(int) * 2) < 0)
+    if (read(readFD_gameServer, int_window_size, sizeof(int) * 2) < 0)
     {
         error_sock("socket server: read fds_ss[0]");
     }
@@ -244,7 +249,7 @@ void server(int readFD_winSize)
     pid_t pid;
     pid_t father_pid = getpid();
 
-    while (1)
+    while (child_count < 2)
     {
         if (getpid() == father_pid)
         {
@@ -263,11 +268,19 @@ void server(int readFD_winSize)
             else
             {
                 writeLog_sock("Connection established\n");
-            }
 
-            if ((pid = fork()) < 0)
-            {
-                error_sock("socket.server: fork()");
+                if ((pid = fork()) < 0) // create the child process only if the accept call is succesfull
+                {
+                    error_sock("socket.server: fork()");
+                }
+                else
+                {
+                    // save the information of the child (pid and relative socket fd)
+                    child_pid[child_count] = pid;
+                    child_sokfd[child_count] = newsock_fd;
+
+                    child_count++; // increment the child count, the value in the child process will always be zero
+                }
             }
         }
         if (pid == 0)
@@ -281,7 +294,47 @@ void server(int readFD_winSize)
             exit(EXIT_SUCCESS);
         }
     }
-    ////////////////////////
+    // if im out of the while loop im inside the father process
+    // set to read on the pipe from the game server
+    writeLog_sock("===> pid control <=== %d", getpid());
+    do
+    {
+        ret_n = read(readFD_gameServer, buffer, sizeof(buffer));
+    } while (ret_n == -1 && errno == EINTR);
+    if(ret_n < 0){
+        writeLog_sock("SOCKET SERVER: error read, termination message, byte %d, %m", ret_n);
+    }else{
+        writeLog_sock("=====>>> SOCKET SERVER: termin msg recived ((%s))", buffer);
+    }
+
+    for (int i = 0; i < 2; i++)
+    {
+        if (kill(child_pid[i], SIGKILL) == 0) // send signal to the process
+        {
+            /*write into logfile that father closed the process*/
+            writeLog_sock(" * SOCKET SERVER: process %d is closed by wd ", child_pid[i]);
+        }
+        else
+        {
+            if (errno == ESRCH)
+            {
+                writeLog_sock("==> WARNING ==> server father: No such process: %d", child_pid[i]);
+            }
+            else
+            {
+                writeLog_sock("==> ERROR ==> server father: kill signal SIGKILL %m ");
+            }
+        }
+    }
+
+    sprintf(buffer, "GE"); // insert "GE" in the buffer
+    for(int i = 0; i < 2; i++){
+        if((ret_n = write(child_sokfd[i], buffer, sizeof(buffer))) < 0){
+            writeLog_sock("==> ERROR ==> server father: write term msg %d", i);
+        }
+    }
+
+    exit(EXIT_SUCCESS); 
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -361,7 +414,7 @@ void client(int port_no_cli, char *string_ip, char *client_ID, int reading_pipe,
         error_sock("socket_server: write in socket");
     }
     writeLog_sock("SOCKET SERVER: client read echo client_id: %s", echo);
-   
+
     // read the window size from server
     bzero(buffer_rec, MAX_MSG_LENGHT);
     n = read(sock_fd, buffer_rec, sizeof(buffer_rec));
@@ -379,7 +432,7 @@ void client(int port_no_cli, char *string_ip, char *client_ID, int reading_pipe,
     }
     // convert dimension window in double
     sscanf(buffer_rec, "%lf,%lf", &window_size[0], &window_size[1]);
-   
+
     // variable for select
     int retVal_sel;
     int retVal_read;
@@ -439,7 +492,7 @@ void client(int port_no_cli, char *string_ip, char *client_ID, int reading_pipe,
                 error_sock("socket_server: write sock_fd item data");
             }
             writeLog_sock("SOCKET SERVER: client write message: %s", buffer_send);
-           
+
             // set all the buffer field to zero
             bzero(buffer_send, MAX_MSG_LENGHT);
 
@@ -450,10 +503,16 @@ void client(int port_no_cli, char *string_ip, char *client_ID, int reading_pipe,
                 error_sock("socket_server: read sock_fd item data");
             }
             writeLog_sock("SOCKET SERVER: client read echo message:%s", buffer_rec);
-           
+
+            /// control for eventual "GE" or "STOP" msg
+            if (strcmp(buffer_rec, "GE") == 0 || strcmp(buffer_rec, "STOP") == 0)
+            {                                                                                      // control if term message is recived
+                writeLog_sock("SOCKET SERVER: client recived termination message:%s", buffer_rec); // save info to log file
+
+                exit(EXIT_SUCCESS);
+            }
         }
     }
-
     exit(EXIT_SUCCESS);
 }
 
@@ -495,7 +554,7 @@ int main(int argc, char *argv[])
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     ///                      MANAGE PIPE                                                                             ///
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
+
     // associa i file descriptor alle variabli nominali
     fd7[0] = fd_unpack[0][0]; // pid pipe
     fd7[1] = fd_unpack[0][1];
@@ -623,9 +682,6 @@ int main(int argc, char *argv[])
     closeAndLog(fdss_s_t[1], "socket_server: close fdss_s_t[0]");
     closeAndLog(fdo_s[0], "socket_server: close fdo_s[0]");
     closeAndLog(fdt_s[0], "socket_server: close fdt_s[0]");
-    
+
     return 0;
 }
-
-
-
