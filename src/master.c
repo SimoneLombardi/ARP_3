@@ -16,7 +16,7 @@
 #include "arplib.h"
 #include "../config/config.h"
 
-int string_parser(char *string, char *first_arg, char *second_arg);
+int string_parser_master(char *string, char *first_arg, char *second_arg);
 
 int main()
 {
@@ -44,18 +44,7 @@ int main()
     { // if problem opening file, send error
         error("master: fopen logfile");
     }
-    else
-    {
-        // wtite in logfile
-        time_t current_time;
-        // obtain local time
-        time(&current_time);
-        fprintf(logfile, "=> create MASTER with pid %d: %s ", getpid(), ctime(&current_time));
-        if (fclose(logfile) < 0)
-        {
-            error("master: fclose logfile");
-        }
-    }
+    writeLog("MASTER is create with pid %d ", getpid());
 
     // manage pipe------------------------------------------------------------------------
     // Pipe for comommunication between server -> master for send back the pid
@@ -175,11 +164,15 @@ int main()
     writeLog("MASTER to obstacle         fdo_s:     %d,%d", fdo_s[0], fdo_s[1]);
     writeLog("MASTER to rule             rule_pipe: %d,%d,  fdrp_ss: %d,%d", rule_pipe[0], rule_pipe[1], fdrp_ss[0], fdrp_ss[1]);
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //              SPAWN PROCESS                                                                                                             //
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     //--- SOCKET SERVER process -------------------------------------------------------------------------------------------------
     // char *arg_list_socket_server_1[] = {"konsole", "-e", "./socket_server", first_arg, str_fd7[0], str_fd7[1], str_fdt_s[0], str_fdt_s[1], str_fdo_s[0], str_fdo_s[1], str_fdss_s_t[0], str_fdss_s_t[1], str_fdss_s_o[0], str_fdss_s_o[1], str_fds_ss[0], str_fds_ss[1], NULL};
-    char *arg_list_socket_server[] = {"konsole", "-e", "./socket_server", str_fd7[0], str_fd7[1], str_fdt_s[0], str_fdt_s[1], str_fdo_s[0], str_fdo_s[1], str_fdss_s_t[0], str_fdss_s_t[1], str_fdss_s_o[0], str_fdss_s_o[1], str_fds_ss[0], str_fds_ss[1], str_fdrp_ss[0], str_fdrp_ss[1], NULL};
+    char *arg_list_socket[] = {"./socket", str_fd7[0], str_fd7[1], str_fdt_s[0], str_fdt_s[1], str_fdo_s[0], str_fdo_s[1], str_fdss_s_t[0], str_fdss_s_t[1], str_fdss_s_o[0], str_fdss_s_o[1], str_fds_ss[0], str_fds_ss[1], str_fdrp_ss[0], str_fdrp_ss[1], NULL};
 
-    child_pids[5] = spawn("konsole", arg_list_socket_server);
+    child_pids[5] = spawn("./socket", arg_list_socket);
     // printf("first_arg: %s\n\n\n", first_arg);
 
     writeLog("MASTER spawn socket server with pid: %d ", child_pids[5]);
@@ -229,7 +222,7 @@ int main()
     recive_correct_pid(fd3, &child_pids_received[2]);
     writeLog("MASTER RECIVED drone real pid: %d ", child_pids_received[2]);
 
-    // --- TARGET process -----------------------------------------------------------------------------------------------------
+    //---- TARGET process -----------------------------------------------------------------------------------------------------
     char *arg_list_target[] = {"./target", str_fd4[0], str_fd4[1], str_fdt_s[0], str_fdt_s[1], NULL};
     child_pids[3] = spawn("./target", arg_list_target);
     writeLog("MASTER spawn target with pid: %d ", child_pids[3]);
@@ -237,7 +230,7 @@ int main()
     recive_correct_pid(fd4, &child_pids_received[3]);
     writeLog("MASTER RECIVED target real pid: %d ", child_pids_received[3]);
 
-    // --- OBSTACLE process -------------------------------------------------------------------------------------------------------
+    //---- OBSTACLE process -------------------------------------------------------------------------------------------------------
     char *arg_list_obstacle[] = {"./obstacle", str_fd5[0], str_fd5[1], str_fdo_s[0], str_fdo_s[1], NULL};
     child_pids[4] = spawn("./obstacle", arg_list_obstacle);
     writeLog("MASTER spawn obstacle with pid: %d ", child_pids[4]);
@@ -256,16 +249,19 @@ int main()
         sprintf(str_child_pids_received[i], "%d", child_pids_received[i]);
     }
 
-    writeLog("MASTER: child_pids are: %s, %s, %s, %s, %s ", str_child_pids[0], str_child_pids[1], str_child_pids[2], str_child_pids[3], str_child_pids[4]);
-    writeLog("MASTER child_pids_received are: %s, %s, %s, %s, %s", str_child_pids_received[0], str_child_pids_received[1], str_child_pids_received[2], str_child_pids_received[3], str_child_pids_received[4]);
-    /*
-    // --- WATCHDOG process --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    writeLog("MASTER: child_pids are: %s, %s, %s, %s, %s, %s ", str_child_pids[0], str_child_pids[1], str_child_pids[2], str_child_pids[3], str_child_pids[4], str_child_pids[5]);
+    writeLog("MASTER child_pids_received are: %s, %s, %s, %s, %s, %s", str_child_pids_received[0], str_child_pids_received[1], str_child_pids_received[2], str_child_pids_received[3], str_child_pids_received[4], str_child_pids_received[5]);
+    
+    //------- WATCHDOG process --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     // spawn watchdog, and pass as argument all the pids of processes
-    char *arg_list_wd[] = {"./wd", str_child_pids[0], str_child_pids[1], str_child_pids[2], str_child_pids[3], str_child_pids[4], str_child_pids_received[0], str_child_pids_received[1], str_child_pids_received[2], str_child_pids_received[3], str_child_pids_received[4], NULL};
+    char *arg_list_wd[] = {"./wd", str_child_pids[0], str_child_pids[1], str_child_pids[2], str_child_pids[3], str_child_pids[4], str_child_pids[5], str_child_pids_received[0],str_child_pids_received[1], str_child_pids_received[2], str_child_pids_received[3], str_child_pids_received[4], str_child_pids_received[5], NULL};
     child_pids[num_ps] = spawn("./wd", arg_list_wd);
     writeLog("MASTER spawn WATCHDOG with pid: %d ", child_pids[num_ps]);
     // The master will wait until all the process will terminate
 
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                  WAIT FOR THE PID OF THE SON                                                                         //
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     pid_t waitResult;
     int status;
     for (i = 0; i <= num_ps; i++)
@@ -278,21 +274,25 @@ int main()
         }
         if (WIFEXITED(status))
         {
+            writeLog("Process %d is termined with status %d\n", i, WEXITSTATUS(status));
+            writeLog_wd("Process %d is termined with status %d\n", i, WEXITSTATUS(status));
             printf("Process %d is termined with status %d\n", i, WEXITSTATUS(status));
             fflush(stdout);
         }
         else
         {
+            writeLog("Process %d is termined with anomaly\n", i);
+            writeLog_wd("Process %d is termined with anomaly\n", i);
             printf("Process %d is termined with anomaly\n", i);
             fflush(stdout);
         }
     }
-    */
+    
 
     return 0;
 }
 
-int string_parser(char *string, char *first_arg, char *second_arg)
+int string_parser_master(char *string, char *first_arg, char *second_arg)
 {
     // define the char that separate the arguments in the string
     char *separator = " ";

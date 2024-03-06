@@ -18,5 +18,4 @@ C : down
 V : down rigth
 
 to select different game mode insert
-solo : "singleplayer"
-multi : <"ip address"> <"port number">
+ <"ip address"> <"port number">

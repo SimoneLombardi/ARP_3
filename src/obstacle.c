@@ -69,19 +69,26 @@ int main(int argc, char *argv[])
     // initialize the time on random generator
     time_t t = 0;
     srand(time(NULL));
-
-    double set_of_obstacle[MAX_OBST_ARR_SIZE][2];
+    int random_number = 0;
+    double set_of_obstacle[MAX_OBST_ARR_SIZE][2] = {0};
 
     // define write return value
     int retVal_write;
 
     while (1)
     {
+        // set an random integer from 0 to MAX_OBST_ARR_SIZE
         time_t t = time(NULL);
         for (i = 0; i < MAX_OBST_ARR_SIZE; i++)
         {
-            set_of_obstacle[i][0] = (double)rand() / RAND_MAX - 0.5;
-            set_of_obstacle[i][1] = (double)rand() / RAND_MAX - 0.5;
+            random_number = rand() % 2;
+            if(random_number == 0){
+                set_of_obstacle[i][0] = (double)rand() / RAND_MAX;
+                set_of_obstacle[i][1] = (double)rand() / RAND_MAX;
+            }else{
+                set_of_obstacle[i][0] = 0;
+                set_of_obstacle[i][1] = 0;
+            }
         }
 
         // avoid system call interruption by signal
@@ -94,10 +101,8 @@ int main(int argc, char *argv[])
         {
             error("obstacle: error write fdo_s[1]");
         }
-        else
-        {
-            writeLog("/// OBSTACLE: controllo byte scritti: %d", retVal_write);
-        }
+        // check written byte inside the pipe
+        // writeLog("OBSTACLE: write %d bytes in fdo_s[1]", retVal_write);
         // generate obstacle every N seconds; implement a non-blocking timer to avoid problems with signals
         time_t t2 = time(NULL);
         while ((t2 - t) < N)
@@ -105,7 +110,6 @@ int main(int argc, char *argv[])
             t2 = time(NULL);
         }
     }
-
     // close the write file descriptor fdo_s
     closeAndLog(fdo_s[1], "obstacle: close fdo_s[1]");
     exit(EXIT_SUCCESS); // Not reached, but included for completeness
@@ -120,7 +124,7 @@ void sigusr1Handler(int signum, siginfo_t *info, void *context)
         /*send a signal SIGUSR2 to watchdog */
         if (kill(info->si_pid, SIGUSR2) == 0)
         {
-            writeLog("OBSTACLE: pid %d, received signal from wd pid: %d ", getpid(), info->si_pid);
+            writeLog_wd("OBSTACLE: pid %d, received signal from wd pid: %d ", getpid(), info->si_pid);
         }
         else
         {

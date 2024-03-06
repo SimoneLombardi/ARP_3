@@ -219,22 +219,28 @@ int main(int argc, char *argv[])
     wrefresh(spawn_window);
 
     // read the set of target (blocking read)
-    if ((retVal_read = read(fdss_s_t[0], set_of_target, sizeof(double) * MAX_TARG_ARR_SIZE * 2)) == -1)
+    do
+    {
+        retVal_read = read(fdss_s_t[0], set_of_target, sizeof(double) * MAX_TARG_ARR_SIZE * 2);
+    } while (retVal_read == -1 && errno == EINTR);
+    if (retVal_read == -1)
     {
         error("server: read fdss_s_t[0]");
     }
     else
     {
-        writeLog("///SERVER: controllo byte LETTI target: %d", retVal_read);
-        printf("///SERVER: controllo byte LETTI target: %d", retVal_read);
+        // checking readed byte in pipe
+        writeLog("SERVER: read %d bytes in fdss_s_t[0]", retVal_read);
     }
 
     // moltiply the target for the reference system. I use the same reference system of the drone
     // The obstacle are between -1 and 1
     for (i = 0; i < MAX_TARG_ARR_SIZE; i++)
     {
-        int_set_of_target[i][0] = (int)(set_of_target[i][0] * spawn_Col);
-        int_set_of_target[i][1] = (int)(set_of_target[i][1] * spawn_Row);
+        int_set_of_target[i][0] = (int)((set_of_target[i][0] - 0.5) * spawn_Col);
+        int_set_of_target[i][1] = (int)((set_of_target[i][1] - 0.5) * spawn_Row);
+        // print the read data
+        writeLog("SERVER: target %d position is: %d %d ", i, int_set_of_target[i][0], int_set_of_target[i][1]);
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -311,11 +317,15 @@ int main(int argc, char *argv[])
                         }
                         else
                         {
+                            // checking readed byte in pipe
+                            writeLog("SERVER: read %d bytes in fdss_s_o[0]", retVal_read);
                             // moltiply the obstacle for the windows size --> get int position of obstacle
                             for (i = 0; i < MAX_OBST_ARR_SIZE; i++)
                             {
-                                int_set_of_obstacle[i][0] = (int)(set_of_obstacle[i][0] * spawn_Col);
-                                int_set_of_obstacle[i][1] = (int)(set_of_obstacle[i][1] * spawn_Row);
+                                int_set_of_obstacle[i][0] = (int)((set_of_obstacle[i][0] - 0.5) * spawn_Col);
+                                int_set_of_obstacle[i][1] = (int)((set_of_obstacle[i][1] - 0.5) * spawn_Row);
+                                // print the read data
+                                writeLog("SERVER: obstacle %d position is: %d %d ", i, int_set_of_obstacle[i][0], int_set_of_obstacle[i][1]);
                             }
                             new_obstacles = 1; // set the flag for print the map
                         }
@@ -559,7 +569,7 @@ void sigusr1Handler(int signum, siginfo_t *info, void *context)
         {
             error("server: kill SIGUSR2");
         }
-        writeLog("SERVER, pid %d, received signal from wd pid: %d ", getpid(), info->si_pid);
+        writeLog_wd("SERVER, pid %d, received signal from wd pid: %d ", getpid(), info->si_pid);
     }
 }
 

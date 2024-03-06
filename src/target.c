@@ -67,11 +67,11 @@ int main(int argc, char *argv[])
     writeLog("TARGET value of fd4 are: %d %d ", fd4[0], fd4[1]);
     writeLog("TARGET value of fdt_s are: %d %d ", fdt_s[0], fdt_s[1]);
 
-    double set_of_target[MAX_TARG_ARR_SIZE][2];
-    for (int i = 0; i < MAX_TARG_ARR_SIZE; i++)
+    double set_of_target[TARGET_NUMBER][2];
+    for (int i = 0; i < TARGET_NUMBER; i++)
     {
-        set_of_target[i][0] = ((double)rand() / RAND_MAX) - 0.5;
-        set_of_target[i][1] = ((double)rand() / RAND_MAX) - 0.5;
+        set_of_target[i][0] = ((double)rand() / RAND_MAX);
+        set_of_target[i][1] = ((double)rand() / RAND_MAX);
     }
 
     // define write retVal
@@ -80,18 +80,15 @@ int main(int argc, char *argv[])
     // avoid syscall beign blocked by a signal
     do
     {
-        retVal_write = write(fdt_s[1], set_of_target, sizeof(double) * MAX_TARG_ARR_SIZE * 2);
+        retVal_write = write(fdt_s[1], set_of_target, sizeof(double) * TARGET_NUMBER * 2);
     } while (retVal_write == -1 && errno == EINTR);
     // check for general errors
     if (retVal_write < 0)
     {
         error("obstacle: error write fdt_s[1]");
     }
-    else
-    {
-        writeLog("/// TARGHET: controllo byte scritti: %d", retVal_write);
-    }
-
+    // checking written byte in pipe 
+    // writeLog("TARGET: write %d bytes in fdt_s[1]", retVal_write);
     while (1)
     {
         sleep(1);
@@ -106,7 +103,6 @@ int main(int argc, char *argv[])
 ////---- Functions section -----------------------------------------------------------
 /* function for write in logfile*/
 
-// Inserire perror nella kill
 void sigusr1Handler(int signum, siginfo_t *info, void *context)
 {
     if (signum == SIGUSR1)
@@ -115,7 +111,7 @@ void sigusr1Handler(int signum, siginfo_t *info, void *context)
         // printf("SERVER sig handler");
         if (kill(info->si_pid, SIGUSR2) == 0)
         {
-            writeLog("TARGET: pid %d, received signal from wd pid: %d ", getpid(), info->si_pid);
+            writeLog_wd("TARGET: pid %d, received signal from wd pid: %d ", getpid(), info->si_pid);
         }
         else
         {
