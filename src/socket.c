@@ -79,7 +79,7 @@ void serverHandlingFunction(int newsock_fd, double window_size[])
 
     // convert double window_size in string
     bzero(buffer_send, MAX_MSG_LENGHT);
-    sprintf(buffer_send, "%.3f,%.3f", window_size[0], window_size[1]);
+    sprintf(buffer_send, "%.3f, %.3f", window_size[0], window_size[1]);
     // write window size to socket
     n = write(newsock_fd, buffer_send, sizeof(buffer_send));
     if (n == -1)
